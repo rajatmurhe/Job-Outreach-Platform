@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 """
 FastAPI Backend for Rajat Murhe's Cold Outreach Control Center.
 Powers the market-grade SaaS Web Dashboard.
@@ -345,27 +346,59 @@ async def upload_leads_file(file: UploadFile = File(...)):
 
 
 
-def get_resume_for_role(role, base_dir=BASE_DIR):
-    role_lower = (role or '').lower()
-    if any(k in role_lower for k in ['agent', 'multi-agent', 'orchestrat', 'genai platform', 'mcp']):
-        candidates = ['resume_agentic_ai.pdf', 'Rajat.pdf', 'resume.pdf']
-    elif any(k in role_lower for k in ['voice', 'clinical', 'speech', 'dialogue', 'conversational', 'healthcare']):
-        candidates = ['resume_voice_conversational.pdf', 'Rajat-Murhe.pdf', 'resume.pdf']
-    elif any(k in role_lower for k in ['vision', 'video', 'cv', 'image', 'multimodal', 'object detect']):
-        candidates = ['resume_computer_vision.pdf', 'Rajat-Resume.pdf', 'resume.pdf']
-    elif any(k in role_lower for k in ['rag', 'document', 'contract', 'legal', 'retrieval', 'nlp']):
-        candidates = ['resume_rag_nlp.pdf', 'Rajat-CV.pdf', 'resume.pdf']
-    elif any(k in role_lower for k in ['anomaly', 'threat', 'risk', 'telematics', 'machine learning', 'data science', 'data ai', 'cloud ai', 'infrastructure', 'deep learning']):
-        candidates = ['resume_ml_systems.pdf', 'Rajat-Murhe-Resume.pdf', 'resume.pdf']
-    else:
-        candidates = ['resume_general_swe.pdf', 'Rajat-Murhe-CV.pdf', 'Rajat_Murhe_Resume.pdf', 'resume.pdf']
+# EXACT PROJECTS AS PRINTED IN EACH SPECIFIC RESUME PDF
+RESUME_PROJECTS = {
+    "Rajat.pdf": [
+        "ClinicVoice AI: voice receptionist for clinics booking appointments on Google Calendar with LangGraph, MCP tools, 4 safety layers and red-team CI evals (github.com/rajatmurhe/clinicvoice-ai)",
+        "Atlas: commercial analytics workbench with a LangGraph SQL agent, PostgreSQL star schema over 24k+ records, reaching 1.25% forecast MAPE (github.com/rajatmurhe/atlas-commercial-intelligence)",
+        "FieldProof AI: multi-tenant platform where Gemini checks technician job videos with human review & async PostgreSQL queue (github.com/rajatmurhe/fieldproof-ai)",
+        "AI Job Assistant: resume-to-job matching tool with evidence, n8n automation, and multi-provider LLM API schema validation (github.com/rajatmurhe/ai-job-assistant)"
+    ],
+    "Rajat-Murhe.pdf": [
+        "ClinicVoice AI: multilingual voice receptionist for clinics (Hindi, English, Marathi) with Whisper, LangGraph, MCP, XTTS v2, booking real Google Calendar appointments & 48ms semantic caching (github.com/rajatmurhe/clinicvoice-ai)",
+        "NeuroAI: explainable clinical diagnostic platform predicting Alzheimer's stages using Random Forest/XGBoost (85.23% accuracy) and fine-tuned BERT (81.82%) with SHAP explanations (github.com/rajatmurhe/NeuroAI-Diagnostic-Platform | neuroai-diagnostic-platform.onrender.com)",
+        "Atlas: commercial analytics workbench with a LangGraph SQL agent over 24k+ PostgreSQL records, reaching 1.25% forecast MAPE (github.com/rajatmurhe/atlas-commercial-intelligence)",
+        "FieldProof AI: multi-tenant platform where Gemini audits technician job videos with human-in-the-loop review and audit trails (github.com/rajatmurhe/fieldproof-ai)"
+    ],
+    "Rajat-Resume.pdf": [
+        "FieldProof AI: multi-tenant platform where Gemini video understanding audits technician job videos with human review and an async PostgreSQL queue with retries (github.com/rajatmurhe/fieldproof-ai)",
+        "NeuroAI: explainable clinical diagnostic platform predicting Alzheimer's stages with Random Forest/XGBoost (85.23% accuracy) and SHAP feature attributions (github.com/rajatmurhe/NeuroAI-Diagnostic-Platform | neuroai-diagnostic-platform.onrender.com)",
+        "SentinelAI: adaptive insider threat detection using Isolation Forest and One-Class SVM with Tree SHAP explanations (github.com/rajatmurhe/Sentinel-AI | sentinel-ai-czmu.onrender.com)",
+        "CreditX: credit risk classifier evaluated on 31,711 rows reaching 78.62% accuracy and 74.26% Macro F1 (github.com/rajatmurhe/CrediX-Explainable-Credit-Intelligence | credix.streamlit.app)"
+    ],
+    "Rajat-CV.pdf": [
+        "ContractIQ: AI contract review assistant where you upload contracts, ask questions in plain language, and see the exact verbatim source quote behind each answer (github.com/rajatmurhe/contractiq | contractiq-frontend-2e3u.onrender.com)",
+        "AI Job Assistant: resume and job match tool showing skill fit with evidence, automated n8n workflows, and multi-provider LLM schema validation (github.com/rajatmurhe/ai-job-assistant)",
+        "Atlas: commercial analytics workbench with a LangGraph SQL agent over 24k+ PostgreSQL records, achieving 1.25% forecast MAPE (github.com/rajatmurhe/atlas-commercial-intelligence)",
+        "ClinicVoice AI: voice receptionist with LangGraph and MCP tools that answers patient queries, books real appointments & enforces safety guardrails (github.com/rajatmurhe/clinicvoice-ai)"
+    ],
+    "Rajat-Murhe-Resume.pdf": [
+        "SentinelAI: insider threat detection using Isolation Forest and One-Class SVM with Tree SHAP to explain every flag, tested with attack simulations (github.com/rajatmurhe/Sentinel-AI | sentinel-ai-czmu.onrender.com)",
+        "NeuroAI: clinical diagnostic platform predicting Alzheimer's stages using Random Forest/XGBoost (85.23% accuracy) and fine-tuned BERT with SHAP explanations (github.com/rajatmurhe/NeuroAI-Diagnostic-Platform | neuroai-diagnostic-platform.onrender.com)",
+        "CreditX: credit risk classification model evaluated on 31,711 rows reaching 78.62% accuracy and 74.26% Macro F1 (github.com/rajatmurhe/CrediX-Explainable-Credit-Intelligence | credix.streamlit.app)",
+        "FieldProof AI: multi-tenant platform where Gemini audits technician job videos with human review and an async PostgreSQL job queue with retries (github.com/rajatmurhe/fieldproof-ai)"
+    ],
+    "Rajat-Murhe-CV.pdf": [
+        "ClinicVoice AI: voice receptionist for clinics booking appointments on Google Calendar with LangGraph, MCP tools, 4 safety layers and red-team CI evals (github.com/rajatmurhe/clinicvoice-ai)",
+        "ContractIQ: AI contract review web app where users ask questions and see the exact verbatim source quote behind each answer (github.com/rajatmurhe/contractiq | contractiq-frontend-2e3u.onrender.com)",
+        "AI Job Assistant: resume and job match tool showing skill fit with evidence, drafting materials, and automating with n8n workflows (github.com/rajatmurhe/ai-job-assistant)",
+        "FieldProof AI: multi-tenant platform where Gemini checks technician job videos against checklists with human review & async PostgreSQL queue (github.com/rajatmurhe/fieldproof-ai)"
+    ]
+}
 
+
+
+def get_resume_for_role(role, base_dir=BASE_DIR):
+    filename = get_resume_filename_for_role(role)
+    candidates = [
+        os.path.join(base_dir, filename),
+        os.path.join(base_dir, "resumes", filename),
+        os.path.join(base_dir, "Rajat_Murhe_Resume.pdf")
+    ]
     for c in candidates:
-        if os.path.isfile(os.path.join(base_dir, c)):
-            return c
-        if os.path.isfile(os.path.join(base_dir, 'resumes', c)):
-            return c
-    return 'resume.pdf'
+        if os.path.isfile(c):
+            return os.path.basename(c)
+    return "Rajat_Murhe_Resume.pdf"
 
 
 @app.post("/api/leads/preview")
@@ -386,20 +419,22 @@ def preview_lead_email(lead: Dict[str, Any]):
     if not hook:
         hook = f"I've been following what {comp} is building in applied AI and tech innovation."
 
+    resume_name = get_resume_filename_for_role(role)
+    projects = RESUME_PROJECTS.get(resume_name, RESUME_PROJECTS["Rajat-Murhe-CV.pdf"])
+    projects_formatted = "\n".join(f"{i+1}. {p}" for i, p in enumerate(projects[:3]))
+
     body = f"""Hi {name},
 
 I'm Rajat Murhe, a final year CS student (AI and ML) at VIT Chennai, based in Pune. I'm writing to apply for internship or entry level opportunities at {comp}, especially for the {role} role.
 
 {hook}
 
-A few things I've built:
-1. ClinicVoice AI: a voice agent that books real appointments on Google Calendar, with safety checks and tests (github.com/rajatmurhe/clinicvoice-ai)
-2. ContractIQ: a contract review app that answers with the exact source quote (github.com/rajatmurhe/contractiq)
-3. FieldProof AI: Gemini reviews field work videos, with human review and an audit trail (github.com/rajatmurhe/fieldproof-ai)
+A few projects from my resume:
+{projects_formatted}
 
-I have also done three internships across AI engineering and product testing, on live products.
+I have also completed three internships across AI engineering, multimodal workflows, and platform development on live products.
 
-My resume is attached for your reference. If there is an opening, or someone else I should speak to, I would be grateful for your guidance. I can start right away and learn fast.
+My resume ({resume_name}) is attached for your reference. If there is an opening, or someone else I should speak to, I would be grateful for your guidance. I can start right away and learn fast.
 
 Thank you for your time.
 
@@ -413,7 +448,7 @@ linkedin.com/in/rajat-murhe | github.com/rajatmurhe"""
         "recipient": em,
         "name": name,
         "body": body,
-        "attachment": get_resume_for_role(role)
+        "attachment": resume_name
     }
 
 

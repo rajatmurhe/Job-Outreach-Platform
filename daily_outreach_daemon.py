@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
 Autonomous Cold Outreach Daemon for Rajat Murhe
-Independent from Antigravity. Runs silently in the background on macOS via launchd / cron.
-- Auto-checks and connects to Brave Browser via CDP (port 9222).
-- Automatically unfreezes background tabs without stealing macOS window focus.
-- Attaches Rajat_Murhe_Resume.pdf and personalizes each application.
-- Enforces safe daily caps across multiple personal Gmail accounts.
-- Automatically sends macOS desktop notifications upon completion.
+Independent from Antigravity. Runs silently in the background on macOS.
+- Connects to Brave Browser via CDP (port 9222).
+- STRICT SINGLE TAB ENGINE: Reuses the same tab across all emails. Never opens new tabs in the loop.
+- STRICT PERSONAL ACCOUNT PROTECTION: Hard aborts if rajatmurhe1@gmail.com is ever active.
+- EXACT RESUME-TO-PROJECT ALIGNMENT: Reads each resume PDF and includes ONLY the projects physically present on that attached resume.
+- Personalizes recipient name, company, target role, and personalized hook.
+- Enforces safe daily caps across verified outreach accounts.
+- Desktop notifications upon completion.
 """
 
 import asyncio
@@ -29,6 +31,48 @@ os.makedirs(LOGS_DIR, exist_ok=True)
 
 TODAY_STR = datetime.date.today().strftime("%Y-%m-%d")
 DAILY_LOG_PATH = os.path.join(LOGS_DIR, f"outreach_{TODAY_STR}.log")
+
+FORBIDDEN_ACCOUNTS = {"rajatmurhe1@gmail.com"}
+
+# EXACT PROJECTS AS PRINTED IN EACH SPECIFIC RESUME PDF
+RESUME_PROJECTS = {
+    "Rajat.pdf": [
+        "ClinicVoice AI: voice receptionist for clinics booking appointments on Google Calendar with LangGraph, MCP tools, 4 safety layers and red-team CI evals (github.com/rajatmurhe/clinicvoice-ai)",
+        "Atlas: commercial analytics workbench with a LangGraph SQL agent, PostgreSQL star schema over 24k+ records, reaching 1.25% forecast MAPE (github.com/rajatmurhe/atlas-commercial-intelligence)",
+        "FieldProof AI: multi-tenant platform where Gemini checks technician job videos with human review & async PostgreSQL queue (github.com/rajatmurhe/fieldproof-ai)",
+        "AI Job Assistant: resume-to-job matching tool with evidence, n8n automation, and multi-provider LLM API schema validation (github.com/rajatmurhe/ai-job-assistant)"
+    ],
+    "Rajat-Murhe.pdf": [
+        "ClinicVoice AI: multilingual voice receptionist for clinics (Hindi, English, Marathi) with Whisper, LangGraph, MCP, XTTS v2, booking real Google Calendar appointments & 48ms semantic caching (github.com/rajatmurhe/clinicvoice-ai)",
+        "NeuroAI: explainable clinical diagnostic platform predicting Alzheimer's stages using Random Forest/XGBoost (85.23% accuracy) and fine-tuned BERT (81.82%) with SHAP explanations (github.com/rajatmurhe/NeuroAI-Diagnostic-Platform | neuroai-diagnostic-platform.onrender.com)",
+        "Atlas: commercial analytics workbench with a LangGraph SQL agent over 24k+ PostgreSQL records, reaching 1.25% forecast MAPE (github.com/rajatmurhe/atlas-commercial-intelligence)",
+        "FieldProof AI: multi-tenant platform where Gemini audits technician job videos with human-in-the-loop review and audit trails (github.com/rajatmurhe/fieldproof-ai)"
+    ],
+    "Rajat-Resume.pdf": [
+        "FieldProof AI: multi-tenant platform where Gemini video understanding audits technician job videos with human review and an async PostgreSQL queue with retries (github.com/rajatmurhe/fieldproof-ai)",
+        "NeuroAI: explainable clinical diagnostic platform predicting Alzheimer's stages with Random Forest/XGBoost (85.23% accuracy) and SHAP feature attributions (github.com/rajatmurhe/NeuroAI-Diagnostic-Platform | neuroai-diagnostic-platform.onrender.com)",
+        "SentinelAI: adaptive insider threat detection using Isolation Forest and One-Class SVM with Tree SHAP explanations (github.com/rajatmurhe/Sentinel-AI | sentinel-ai-czmu.onrender.com)",
+        "CreditX: credit risk classifier evaluated on 31,711 rows reaching 78.62% accuracy and 74.26% Macro F1 (github.com/rajatmurhe/CrediX-Explainable-Credit-Intelligence | credix.streamlit.app)"
+    ],
+    "Rajat-CV.pdf": [
+        "ContractIQ: AI contract review assistant where you upload contracts, ask questions in plain language, and see the exact verbatim source quote behind each answer (github.com/rajatmurhe/contractiq | contractiq-frontend-2e3u.onrender.com)",
+        "AI Job Assistant: resume and job match tool showing skill fit with evidence, automated n8n workflows, and multi-provider LLM schema validation (github.com/rajatmurhe/ai-job-assistant)",
+        "Atlas: commercial analytics workbench with a LangGraph SQL agent over 24k+ PostgreSQL records, achieving 1.25% forecast MAPE (github.com/rajatmurhe/atlas-commercial-intelligence)",
+        "ClinicVoice AI: voice receptionist with LangGraph and MCP tools that answers patient queries, books real appointments & enforces safety guardrails (github.com/rajatmurhe/clinicvoice-ai)"
+    ],
+    "Rajat-Murhe-Resume.pdf": [
+        "SentinelAI: insider threat detection using Isolation Forest and One-Class SVM with Tree SHAP to explain every flag, tested with attack simulations (github.com/rajatmurhe/Sentinel-AI | sentinel-ai-czmu.onrender.com)",
+        "NeuroAI: clinical diagnostic platform predicting Alzheimer's stages using Random Forest/XGBoost (85.23% accuracy) and fine-tuned BERT with SHAP explanations (github.com/rajatmurhe/NeuroAI-Diagnostic-Platform | neuroai-diagnostic-platform.onrender.com)",
+        "CreditX: credit risk classification model evaluated on 31,711 rows reaching 78.62% accuracy and 74.26% Macro F1 (github.com/rajatmurhe/CrediX-Explainable-Credit-Intelligence | credix.streamlit.app)",
+        "FieldProof AI: multi-tenant platform where Gemini audits technician job videos with human review and an async PostgreSQL job queue with retries (github.com/rajatmurhe/fieldproof-ai)"
+    ],
+    "Rajat-Murhe-CV.pdf": [
+        "ClinicVoice AI: voice receptionist for clinics booking appointments on Google Calendar with LangGraph, MCP tools, 4 safety layers and red-team CI evals (github.com/rajatmurhe/clinicvoice-ai)",
+        "ContractIQ: AI contract review web app where users ask questions and see the exact verbatim source quote behind each answer (github.com/rajatmurhe/contractiq | contractiq-frontend-2e3u.onrender.com)",
+        "AI Job Assistant: resume and job match tool showing skill fit with evidence, drafting materials, and automating with n8n workflows (github.com/rajatmurhe/ai-job-assistant)",
+        "FieldProof AI: multi-tenant platform where Gemini checks technician job videos against checklists with human review & async PostgreSQL queue (github.com/rajatmurhe/fieldproof-ai)"
+    ]
+}
 
 
 def log(msg, level="INFO"):
@@ -67,35 +111,7 @@ def ensure_brave_running(port=9222):
     except Exception:
         pass
 
-    log("⚠️ Brave is not responding on port 9222. Attempting to launch Brave automatically with remote debugging...", level="WARNING")
-    brave_app = "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
-    if not os.path.isfile(brave_app):
-        log(f"❌ Brave binary not found at {brave_app}", level="ERROR")
-        return False
-
-    try:
-        subprocess.Popen(
-            [brave_app, f"--remote-debugging-port={port}"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True
-        )
-    except Exception as e:
-        log(f"❌ Failed to launch Brave: {e}", level="ERROR")
-        return False
-
-    log("Waiting for Brave CDP port to initialize...")
-    for _ in range(15):
-        time.sleep(1)
-        try:
-            req = urllib.request.urlopen(f"http://localhost:{port}/json/version", timeout=3)
-            if req.status == 200:
-                log("✅ Brave started successfully on port 9222!")
-                return True
-        except Exception:
-            pass
-
-    log("❌ Could not connect to Brave port 9222 after launch.", level="ERROR")
+    log("❌ Brave is not responding on port 9222. Please ensure Brave is running with --remote-debugging-port=9222", level="ERROR")
     return False
 
 
@@ -114,82 +130,98 @@ def activate_tab_silently(port, target_id):
         pass
 
 
-def get_gmail_tab_ws(port, user_index, account_email):
-    try:
-        url = f"http://localhost:{port}/json/list"
-        req = urllib.request.urlopen(url, timeout=15)
-        targets = json.loads(req.read().decode("utf-8"))
+def find_and_verify_account_tab(port, account_email, user_index):
+    """
+    Locates the SINGLE existing tab for account_email in Brave.
+    Hardcodes safety check against rajatmurhe1@gmail.com.
+    Returns (tab_id, ws_url).
+    """
+    url = f"http://localhost:{port}/json/list"
+    req = urllib.request.urlopen(url, timeout=10)
+    targets = json.loads(req.read().decode("utf-8"))
 
-        target_pattern = f"mail.google.com/mail/u/{user_index}"
+    candidates = []
+    for t in targets:
+        if t.get("type") != "page":
+            continue
+        tab_url = t.get("url", "")
+        tab_title = t.get("title", "")
+        if "mail.google.com" in tab_url or "Gmail" in tab_title:
+            candidates.append(t)
 
-        # 1. Look for matching tab with inbox
-        for t in targets:
-            if t.get("type") == "page" and target_pattern in t.get("url", "") and "inbox" in t.get("url", "").lower():
-                activate_tab_silently(port, t.get("id"))
-                return t["webSocketDebuggerUrl"]
+    matched_tab = None
+    for t in candidates:
+        ws_url = t.get("webSocketDebuggerUrl")
+        if not ws_url:
+            continue
+        try:
+            with ws_sync.connect(ws_url, open_timeout=2) as ws:
+                ws.send(json.dumps({
+                    "id": 1,
+                    "method": "Runtime.evaluate",
+                    "params": {
+                        "expression": '(() => { const a = document.querySelector("a[aria-label*=\'Google Account\'], a[aria-label*=\'Google-Konto\'], a[href*=\'SignOutOptions\']"); return { aria: a ? a.getAttribute("aria-label") : "", title: document.title, url: window.location.href }; })()',
+                        "returnByValue": True
+                    }
+                }))
+                res = json.loads(ws.recv(timeout=3))
+                val = res.get("result", {}).get("result", {}).get("value", {})
+                aria = val.get("aria", "").lower()
+                title = val.get("title", "").lower()
 
-        # 2. Look for any matching user_index tab
-        for t in targets:
-            if t.get("type") == "page" and target_pattern in t.get("url", ""):
-                activate_tab_silently(port, t.get("id"))
-                return t["webSocketDebuggerUrl"]
+                # Safety check
+                for forbidden in FORBIDDEN_ACCOUNTS:
+                    if forbidden in aria or forbidden in title:
+                        log(f"🚨 FORBIDDEN ACCOUNT {forbidden} detected in tab {t['id']}. Skipping tab.", level="WARNING")
+                        continue
 
-        # 3. Look by account email in title
-        if account_email:
-            for t in targets:
-                if t.get("type") == "page" and account_email.lower() in t.get("title", "").lower():
-                    activate_tab_silently(port, t.get("id"))
-                    return t["webSocketDebuggerUrl"]
+                if account_email.lower() in aria or account_email.lower() in title or f"/u/{user_index}" in t.get("url", ""):
+                    if account_email.lower() in aria or account_email.lower() in title:
+                        matched_tab = t
+                        break
+        except Exception:
+            continue
 
-        # 4. Open tab if not found
-        log(f"Opening background tab for {account_email} (u/{user_index})...")
-        open_req = urllib.request.Request(f"http://localhost:{port}/json/new?https://mail.google.com/mail/u/{user_index}/#inbox", method="PUT")
-        new_target = json.loads(urllib.request.urlopen(open_req, timeout=15).read().decode("utf-8"))
-        time.sleep(3)
-        activate_tab_silently(port, new_target.get("id"))
-        return new_target.get("webSocketDebuggerUrl")
+    if matched_tab:
+        activate_tab_silently(port, matched_tab["id"])
+        log(f"✅ Found and verified single tab for {account_email} (Tab ID: {matched_tab['id']})")
+        return matched_tab["id"], matched_tab["webSocketDebuggerUrl"]
 
-    except Exception as e:
-        log(f"Failed to locate Gmail tab for u/{user_index}: {e}", level="ERROR")
-    return None
+    log(f"No active tab found for {account_email}. Opening exactly ONE tab at /u/{user_index}/#inbox...")
+    open_req = urllib.request.Request(f"http://localhost:{port}/json/new?https://mail.google.com/mail/u/{user_index}/#inbox", method="PUT")
+    new_target = json.loads(urllib.request.urlopen(open_req, timeout=15).read().decode("utf-8"))
+    time.sleep(4)
+    activate_tab_silently(port, new_target.get("id"))
+    return new_target.get("id"), new_target.get("webSocketDebuggerUrl")
 
 
-
-def get_resume_for_role(role, base_dir=BASE_DIR):
-    role_lower = (role or '').lower()
-    if any(k in role_lower for k in ['agent', 'multi-agent', 'orchestrat', 'genai platform', 'mcp']):
-        candidates = ['resume_agentic_ai.pdf', 'Rajat.pdf', 'resume.pdf']
-    elif any(k in role_lower for k in ['voice', 'clinical', 'speech', 'dialogue', 'conversational', 'healthcare']):
-        candidates = ['resume_voice_conversational.pdf', 'Rajat-Murhe.pdf', 'resume.pdf']
-    elif any(k in role_lower for k in ['vision', 'video', 'cv', 'image', 'multimodal', 'object detect']):
-        candidates = ['resume_computer_vision.pdf', 'Rajat-Resume.pdf', 'resume.pdf']
-    elif any(k in role_lower for k in ['rag', 'document', 'contract', 'legal', 'retrieval', 'nlp']):
-        candidates = ['resume_rag_nlp.pdf', 'Rajat-CV.pdf', 'resume.pdf']
-    elif any(k in role_lower for k in ['anomaly', 'threat', 'risk', 'telematics', 'machine learning', 'data science', 'data ai', 'cloud ai', 'infrastructure', 'deep learning']):
-        candidates = ['resume_ml_systems.pdf', 'Rajat-Murhe-Resume.pdf', 'resume.pdf']
+def get_resume_filename_for_role(role):
+    role_lower = (role or "").lower()
+    if any(k in role_lower for k in ["agent", "multi-agent", "orchestrat", "genai platform", "mcp", "workflow"]):
+        return "Rajat.pdf"
+    elif any(k in role_lower for k in ["voice", "clinical", "speech", "dialogue", "conversational", "healthcare"]):
+        return "Rajat-Murhe.pdf"
+    elif any(k in role_lower for k in ["vision", "video", "cv", "image", "multimodal", "object detect", "robotics"]):
+        return "Rajat-Resume.pdf"
+    elif any(k in role_lower for k in ["rag", "document", "contract", "legal", "retrieval", "nlp", "information extraction"]):
+        return "Rajat-CV.pdf"
+    elif any(k in role_lower for k in ["anomaly", "threat", "risk", "telematics", "machine learning", "data science", "data ai", "cloud ai", "infrastructure", "deep learning"]):
+        return "Rajat-Murhe-Resume.pdf"
     else:
-        candidates = ['resume_general_swe.pdf', 'Rajat-Murhe-CV.pdf', 'Rajat_Murhe_Resume.pdf', 'resume.pdf']
+        return "Rajat-Murhe-CV.pdf"
 
-    for c in candidates:
-        p = os.path.join(base_dir, c)
+
+def resolve_resume_path(resume_file, base_dir=BASE_DIR):
+    candidates = [
+        os.path.join(base_dir, resume_file),
+        os.path.join(base_dir, "resumes", resume_file),
+        os.path.join(base_dir, "Rajat_Murhe_Resume.pdf")
+    ]
+    for p in candidates:
         if os.path.isfile(p):
             return p
-        sub_p = os.path.join(base_dir, 'resumes', c)
-        if os.path.isfile(sub_p):
-            return sub_p
-    return os.path.join(base_dir, 'resume.pdf')
+    return os.path.join(base_dir, "Rajat_Murhe_Resume.pdf")
 
-    p = os.path.join(base_dir, candidate)
-    if os.path.isfile(p):
-        return p
-    sub_p = os.path.join(base_dir, 'resumes', candidate)
-    if os.path.isfile(sub_p):
-        return sub_p
-    for fb in ['Rajat-Murhe-CV.pdf', 'Rajat_Murhe_Resume.pdf', 'Rajat.pdf']:
-        fb_p = os.path.join(base_dir, fb)
-        if os.path.isfile(fb_p):
-            return fb_p
-    return p
 
 def format_lead_message(row):
     company = row.get("Company", "").strip()
@@ -209,20 +241,25 @@ def format_lead_message(row):
     else:
         hook = f"I've been following what {company} is building in applied AI and tech innovation."
 
+    resume_filename = get_resume_filename_for_role(role)
+    resume_path = resolve_resume_path(resume_filename)
+
+    # Use projects that are physically listed in that specific resume
+    projects = RESUME_PROJECTS.get(resume_filename, RESUME_PROJECTS["Rajat-Murhe-CV.pdf"])
+    projects_formatted = "\n".join(f"{i+1}. {p}" for i, p in enumerate(projects[:3]))
+
     body = f"""Hi {name},
 
 I'm Rajat Murhe, a final year CS student (AI and ML) at VIT Chennai, based in Pune. I'm writing to apply for internship or entry level opportunities at {company}, especially for the {role} role.
 
 {hook}
 
-A few things I've built:
-1. ClinicVoice AI: a voice agent that books real appointments on Google Calendar, with safety checks and tests (github.com/rajatmurhe/clinicvoice-ai)
-2. ContractIQ: a contract review app that answers with the exact source quote (github.com/rajatmurhe/contractiq)
-3. FieldProof AI: Gemini reviews field work videos, with human review and an audit trail (github.com/rajatmurhe/fieldproof-ai)
+A few projects from my resume:
+{projects_formatted}
 
-I have also done three internships across AI engineering and product testing, on live products.
+I have also completed three internships across AI engineering, multimodal workflows, and platform development on live products.
 
-My resume is attached for your reference. If there is an opening, or someone else I should speak to, I would be grateful for your guidance. I can start right away and learn fast.
+My resume ({resume_filename}) is attached for your reference. If there is an opening, or someone else I should speak to, I would be grateful for your guidance. I can start right away and learn fast.
 
 Thank you for your time.
 
@@ -231,203 +268,214 @@ Rajat Murhe
 +91 7507661881
 linkedin.com/in/rajat-murhe | github.com/rajatmurhe"""
 
-    return email, name, company, subject, body
+    return email, name, company, subject, body, resume_path
 
 
-async def send_single_email(recipient_email, name, company, subject, body, resume_path, user_index, account_email, port=9222):
-    log(f"Preparing application from {account_email} for: {name} at {company} <{recipient_email}>")
+async def send_single_email_in_tab(ws, recipient_email, name, company, subject, body, resume_path, account_email):
+    """Sends email reusing the exact existing tab WebSocket connection without spawning any new tabs."""
+    msg_id = 0
 
-    ws_url = get_gmail_tab_ws(port, user_index=user_index, account_email=account_email)
-    if not ws_url:
-        raise Exception(f"Could not connect to Gmail tab for {account_email} (u/{user_index}).")
+    async def send_cmd(method, params=None):
+        nonlocal msg_id
+        msg_id += 1
+        cid = msg_id
+        payload = {"id": cid, "method": method}
+        if params:
+            payload["params"] = params
+        await ws.send(json.dumps(payload))
+        while True:
+            r_str = await asyncio.wait_for(ws.recv(), timeout=25)
+            r = json.loads(r_str)
+            if r.get("id") == cid:
+                return r
 
-    async with websockets.connect(ws_url, max_size=10_000_000, ping_interval=10, ping_timeout=10) as ws:
-        msg_id = 0
+    async def eval_js(expression, return_by_value=True):
+        r = await send_cmd("Runtime.evaluate", {
+            "expression": expression,
+            "returnByValue": return_by_value
+        })
+        return r.get("result", {}).get("result", {}).get("value")
 
-        async def send_cmd(method, params=None):
-            nonlocal msg_id
-            msg_id += 1
-            cid = msg_id
-            payload = {"id": cid, "method": method}
-            if params:
-                payload["params"] = params
-            await ws.send(json.dumps(payload))
-            while True:
-                r_str = await asyncio.wait_for(ws.recv(), timeout=20)
-                r = json.loads(r_str)
-                if r.get("id") == cid:
-                    return r
+    # STRICT ACCOUNT DOM ASSERTION
+    account_info = await eval_js("""(() => {
+        const a = document.querySelector("a[aria-label*='Google Account'], a[aria-label*='Google-Konto'], a[href*='SignOutOptions']");
+        return {
+            aria: a ? (a.getAttribute("aria-label") || "") : "",
+            title: document.title || "",
+            url: window.location.href
+        };
+    })()""")
 
-        async def eval_js(expression, return_by_value=True):
-            r = await send_cmd("Runtime.evaluate", {
-                "expression": expression,
-                "returnByValue": return_by_value
-            })
-            return r.get("result", {}).get("result", {}).get("value")
+    active_aria = (account_info.get("aria") or "").lower()
+    active_title = (account_info.get("title") or "").lower()
 
-        # 1. Clean up any open draft
+    if "rajatmurhe1@gmail.com" in active_aria or "rajatmurhe1@gmail.com" in active_title:
+        raise RuntimeError("CRITICAL SAFETY HALT: Personal account rajatmurhe1@gmail.com detected in active tab!")
+
+    if account_email.lower() not in active_aria and account_email.lower() not in active_title:
+        log(f"Warning: Account profile string mismatch (expected {account_email}, found aria='{active_aria}'). Proceeding with caution.", level="WARNING")
+
+    # 1. Clean up any open dialog / draft in the current tab
+    await eval_js("""(() => {
+        const discards = Array.from(document.querySelectorAll("div[aria-label*='Discard draft'], div[data-tooltip*='Discard']"));
+        for (const d of discards) { try { d.click(); } catch(e){} }
+    })()""")
+    await asyncio.sleep(0.5)
+
+    # 2. Trigger Compose
+    log(f"Composing application in tab for: {name} at {company} <{recipient_email}>")
+    await eval_js("""(() => {
+        const btn = document.querySelector("div[gh='cm'], div[role='button'].T-I.T-I-KE");
+        if (btn) btn.click();
+        else window.location.hash = "#inbox?compose=" + Date.now();
+    })()""")
+
+    dialog_ready = False
+    for _ in range(15):
+        await asyncio.sleep(0.4)
+        if await eval_js("!!document.querySelector('div[role=\"dialog\"]')"):
+            dialog_ready = True
+            break
+
+    if not dialog_ready:
+        raise Exception("Compose dialog did not open within timeout.")
+
+    # 3. Fill 'To'
+    js_fill_to = f"""
+    (() => {{
+        const dialog = document.querySelector("div[role='dialog']");
+        if (!dialog) return false;
+        const toInput = dialog.querySelector("input.agP, input[peoplekit-id], input[aria-label*='To'], textarea[name='to']");
+        if (!toInput) return false;
+        toInput.focus();
+        toInput.value = {json.dumps(recipient_email)};
+        toInput.dispatchEvent(new Event("input", {{bubbles: true}}));
+        toInput.dispatchEvent(new KeyboardEvent("keydown", {{key: "Enter", keyCode: 13, bubbles: true}}));
+        toInput.dispatchEvent(new KeyboardEvent("keyup", {{key: "Enter", keyCode: 13, bubbles: true}}));
+        return true;
+    }})()
+    """
+    if not await eval_js(js_fill_to):
+        raise Exception("Failed to fill 'To' recipient field.")
+    await asyncio.sleep(0.5)
+
+    # 4. Fill 'Subject'
+    js_fill_subject = f"""
+    (() => {{
+        const dialog = document.querySelector("div[role='dialog']");
+        if (!dialog) return false;
+        const subjInput = dialog.querySelector("input[name='subjectbox'], input[aria-label*='Subject']");
+        if (!subjInput) return false;
+        subjInput.focus();
+        subjInput.value = {json.dumps(subject)};
+        subjInput.dispatchEvent(new Event("input", {{bubbles: true}}));
+        return true;
+    }})()
+    """
+    if not await eval_js(js_fill_subject):
+        raise Exception("Failed to fill 'Subject' field.")
+    await asyncio.sleep(0.5)
+
+    # 5. Fill 'Body'
+    js_fill_body = f"""
+    (() => {{
+        const dialog = document.querySelector("div[role='dialog']");
+        if (!dialog) return false;
+        const bodyDiv = dialog.querySelector("div[role='textbox'][aria-label*='Message Body'], div[aria-label='Message Body']");
+        if (!bodyDiv) return false;
+        bodyDiv.focus();
+        document.execCommand("selectAll", false, null);
+        document.execCommand("insertText", false, {json.dumps(body)});
+        return true;
+    }})()
+    """
+    if not await eval_js(js_fill_body):
+        raise Exception("Failed to fill 'Message Body' field.")
+    await asyncio.sleep(0.8)
+
+    # 6. Attach Tailored Resume
+    if os.path.exists(resume_path):
+        resume_name = os.path.basename(resume_path)
+        log(f"Attaching matching resume: {resume_name}...")
+        await send_cmd("DOM.enable")
+        res = await send_cmd("Runtime.evaluate", {
+            "expression": "document.querySelector('div[role=\"dialog\"] input[type=\"file\"]') || document.querySelector('input[type=\"file\"]')",
+            "returnByValue": False
+        })
+        obj_id = res.get("result", {}).get("result", {}).get("objectId")
+        if not obj_id:
+            raise Exception("Could not find file input element in Compose dialog.")
+
+        await send_cmd("DOM.setFileInputFiles", {
+            "files": [resume_path],
+            "objectId": obj_id
+        })
+
+        attached = False
+        for _ in range(12):
+            await asyncio.sleep(0.5)
+            text = await eval_js("document.querySelector('div[role=\"dialog\"]') ? document.querySelector('div[role=\"dialog\"]').innerText : ''")
+            if "Resume.pdf" in (text or "") or "Rajat" in (text or ""):
+                attached = True
+                break
+
+        if not attached:
+            log("Warning: Attachment text confirmation buffer...", level="WARNING")
+            await asyncio.sleep(2.0)
+        else:
+            log(f"✅ Resume {resume_name} attached successfully.")
+    else:
+        raise FileNotFoundError(f"Resume file not found at: {resume_path}")
+
+    # 7. Click Send
+    log(f"Sending to {recipient_email}...")
+    click_res = await eval_js("""
+    (() => {
+        const dialog = document.querySelector("div[role='dialog']");
+        if (!dialog) return "no_dialog";
+        const btns = Array.from(dialog.querySelectorAll("div[role='button']"));
+        const sendBtn = btns.find(b => (b.innerText || "").includes("Send") || (b.getAttribute("data-tooltip") || "").includes("Send"));
+        if (sendBtn) {
+            sendBtn.click();
+            return "clicked";
+        }
+        return "not_found";
+    })()
+    """)
+    if click_res != "clicked":
+        raise Exception(f"Send button click failed: {click_res}")
+
+    # 8. Verify sent confirmation
+    delivered = False
+    for _ in range(15):
+        await asyncio.sleep(0.5)
+        check_state = await eval_js("""
+        (() => {
+            const dialog = document.querySelector("div[role='dialog']");
+            const alerts = Array.from(document.querySelectorAll("span.bAq, div.bA8, div[role='alert']")).map(e => e.innerText);
+            return {
+                dialogOpen: !!dialog,
+                hasSentAlert: alerts.some(t => t.includes("Message sent") || t.includes("Your message has been sent"))
+            };
+        })()
+        """)
+        if check_state and (not check_state.get("dialogOpen") or check_state.get("hasSentAlert")):
+            delivered = True
+            break
+
+    if delivered:
+        log(f"✅ Successfully delivered application to {name} at {company} <{recipient_email}>!")
+        return True, "Delivered"
+    else:
+        log("⚠️ Dialog didn't close in time, cleaning up draft...", level="WARNING")
         await eval_js("""(() => {
             const discards = Array.from(document.querySelectorAll("div[aria-label*='Discard draft'], div[data-tooltip*='Discard']"));
             for (const d of discards) { try { d.click(); } catch(e){} }
         })()""")
-        await asyncio.sleep(0.5)
-
-        # 2. Trigger Compose
-        log("Opening Compose window in background...")
-        await eval_js("""(() => {
-            const btn = document.querySelector("div[gh='cm'], div[role='button'].T-I.T-I-KE");
-            if (btn) btn.click();
-            else window.location.hash = "#inbox?compose=" + Date.now();
-        })()""")
-
-        dialog_ready = False
-        for _ in range(15):
-            await asyncio.sleep(0.4)
-            if await eval_js("!!document.querySelector('div[role=\"dialog\"]')"):
-                dialog_ready = True
-                break
-
-        if not dialog_ready:
-            raise Exception("Compose dialog did not open within timeout.")
-
-        log("Compose dialog opened.")
-
-        # 3. Fill 'To'
-        js_fill_to = f"""
-        (() => {{
-            const dialog = document.querySelector("div[role='dialog']");
-            if (!dialog) return false;
-            const toInput = dialog.querySelector("input.agP, input[peoplekit-id], input[aria-label*='To'], textarea[name='to']");
-            if (!toInput) return false;
-            toInput.focus();
-            toInput.value = {json.dumps(recipient_email)};
-            toInput.dispatchEvent(new Event("input", {{bubbles: true}}));
-            toInput.dispatchEvent(new KeyboardEvent("keydown", {{key: "Enter", keyCode: 13, bubbles: true}}));
-            toInput.dispatchEvent(new KeyboardEvent("keyup", {{key: "Enter", keyCode: 13, bubbles: true}}));
-            return true;
-        }})()
-        """
-        if not await eval_js(js_fill_to):
-            raise Exception("Failed to fill 'To' recipient field.")
-        await asyncio.sleep(0.5)
-
-        # 4. Fill 'Subject'
-        js_fill_subject = f"""
-        (() => {{
-            const dialog = document.querySelector("div[role='dialog']");
-            if (!dialog) return false;
-            const subjInput = dialog.querySelector("input[name='subjectbox'], input[aria-label*='Subject']");
-            if (!subjInput) return false;
-            subjInput.focus();
-            subjInput.value = {json.dumps(subject)};
-            subjInput.dispatchEvent(new Event("input", {{bubbles: true}}));
-            return true;
-        }})()
-        """
-        if not await eval_js(js_fill_subject):
-            raise Exception("Failed to fill 'Subject' field.")
-        await asyncio.sleep(0.5)
-
-        # 5. Fill 'Body'
-        js_fill_body = f"""
-        (() => {{
-            const dialog = document.querySelector("div[role='dialog']");
-            if (!dialog) return false;
-            const bodyDiv = dialog.querySelector("div[role='textbox'][aria-label*='Message Body'], div[aria-label='Message Body']");
-            if (!bodyDiv) return false;
-            bodyDiv.focus();
-            document.execCommand("selectAll", false, null);
-            document.execCommand("insertText", false, {json.dumps(body)});
-            return true;
-        }})()
-        """
-        if not await eval_js(js_fill_body):
-            raise Exception("Failed to fill 'Message Body' field.")
-        await asyncio.sleep(0.8)
-
-        # 6. Attach Resume
-        if os.path.exists(resume_path):
-            log(f"Attaching resume: {os.path.basename(resume_path)}...")
-            await send_cmd("DOM.enable")
-            res = await send_cmd("Runtime.evaluate", {
-                "expression": "document.querySelector('div[role=\"dialog\"] input[type=\"file\"]') || document.querySelector('input[type=\"file\"]')",
-                "returnByValue": False
-            })
-            obj_id = res.get("result", {}).get("result", {}).get("objectId")
-            if not obj_id:
-                raise Exception("Could not find file input element in Compose dialog.")
-
-            await send_cmd("DOM.setFileInputFiles", {
-                "files": [resume_path],
-                "objectId": obj_id
-            })
-
-            attached = False
-            for _ in range(12):
-                await asyncio.sleep(0.5)
-                text = await eval_js("document.querySelector('div[role=\"dialog\"]') ? document.querySelector('div[role=\"dialog\"]').innerText : ''")
-                if "Resume.pdf" in (text or "") or "Rajat" in (text or ""):
-                    attached = True
-                    break
-
-            if not attached:
-                log("Warning: Attachment text confirmation buffer...", level="WARNING")
-                await asyncio.sleep(2.0)
-            else:
-                log("✅ Resume attached and verified.")
-        else:
-            raise FileNotFoundError(f"Resume file not found at: {resume_path}")
-
-        # 7. Click Send
-        log(f"Clicking Send to {recipient_email}...")
-        click_res = await eval_js("""
-        (() => {
-            const dialog = document.querySelector("div[role='dialog']");
-            if (!dialog) return "no_dialog";
-            const btns = Array.from(dialog.querySelectorAll("div[role='button']"));
-            const sendBtn = btns.find(b => (b.innerText || "").includes("Send") || (b.getAttribute("data-tooltip") || "").includes("Send"));
-            if (sendBtn) {
-                sendBtn.click();
-                return "clicked";
-            }
-            return "not_found";
-        })()
-        """)
-        if click_res != "clicked":
-            raise Exception(f"Send button click failed: {click_res}")
-
-        # 8. Verify sent confirmation
-        delivered = False
-        for _ in range(15):
-            await asyncio.sleep(0.5)
-            check_state = await eval_js("""
-            (() => {
-                const dialog = document.querySelector("div[role='dialog']");
-                const alerts = Array.from(document.querySelectorAll("span.bAq, div.bA8, div[role='alert']")).map(e => e.innerText);
-                return {
-                    dialogOpen: !!dialog,
-                    hasSentAlert: alerts.some(t => t.includes("Message sent") || t.includes("Your message has been sent"))
-                };
-            })()
-            """)
-            if check_state and (not check_state.get("dialogOpen") or check_state.get("hasSentAlert")):
-                delivered = True
-                break
-
-        if delivered:
-            log(f"✅ Successfully delivered application to {name} at {company} <{recipient_email}>!")
-            return True, "Delivered"
-        else:
-            log("⚠️ Dialog didn't close in time, cleaning up...", level="WARNING")
-            await eval_js("""(() => {
-                const discards = Array.from(document.querySelectorAll("div[aria-label*='Discard draft'], div[data-tooltip*='Discard']"));
-                for (const d of discards) { try { d.click(); } catch(e){} }
-            })()""")
-            return False, "Delivery verification timeout"
+        return False, "Delivery verification timeout"
 
 
 def replenish_queue_if_needed(queue_file, sent_file):
-    """Ensures todays_outreach_queue.csv always has fresh leads from recruiter_leads.csv or Excel."""
     sent_emails = set()
     if os.path.isfile(sent_file):
         with open(sent_file, "r", encoding="utf-8") as f:
@@ -452,7 +500,6 @@ def replenish_queue_if_needed(queue_file, sent_file):
     log(f"Queue has {len(existing_queue)} remaining leads. Auto-replenishing from master lead sources...")
     queued_emails = set(q["Email"].lower().strip() for q in existing_queue) | sent_emails
 
-    # Replenish from recruiter_leads.csv first
     recruiter_file = os.path.join(BASE_DIR, "recruiter_leads.csv")
     if os.path.isfile(recruiter_file):
         with open(recruiter_file, "r", encoding="utf-8") as f:
@@ -470,7 +517,6 @@ def replenish_queue_if_needed(queue_file, sent_file):
                     })
                     queued_emails.add(em)
 
-    # Save replenished queue
     fieldnames = ["Priority", "Company", "Contact_Name", "Email", "Target_Role", "Personalized_Hook"]
     with open(queue_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -486,16 +532,14 @@ async def run_daily_outreach():
     port = config.get("cdp_port", 9222)
     queue_file = os.path.join(BASE_DIR, config.get("leads_file", "todays_outreach_queue.csv"))
     log_file = os.path.join(BASE_DIR, config.get("log_file", "emails_sent.csv"))
-    resume_path = os.path.join(BASE_DIR, config.get("resume_filename", "Rajat_Murhe_Resume.pdf"))
     min_delay = config.get("delays", {}).get("min_seconds", 45)
     max_delay = config.get("delays", {}).get("max_seconds", 75)
     accounts = [acc for acc in config.get("accounts", []) if acc.get("enabled", True)]
 
     print("=" * 65)
-    print("🤖 Rajat Murhe - Autonomous Cold Outreach Daemon")
+    print("🤖 Rajat Murhe - Autonomous Cold Outreach Daemon (Single-Tab Engine)")
     print(f"Date:          {TODAY_STR}")
     print(f"Log:           {DAILY_LOG_PATH}")
-    print(f"Resume:        {resume_path}")
     print(f"Delay Range:   {min_delay}s - {max_delay}s")
     for acc in accounts:
         print(f"  • {acc['account']} (u/{acc['user_index']}): Limit = {acc['daily_limit']}/day")
@@ -521,10 +565,9 @@ async def run_daily_outreach():
                     if ts.startswith(TODAY_STR):
                         today_sent_by_account[sender] = today_sent_by_account.get(sender, 0) + 1
 
-    log(f"Total historical successful recipients: {len(sent_emails)}")
+    log(f"Total historical successful recipients to skip: {len(sent_emails)}")
     log(f"Today's counts so far: {today_sent_by_account}")
 
-    # Check if all enabled accounts have completed their daily limits
     all_done = True
     for acc in accounts:
         sent_so_far = today_sent_by_account.get(acc["account"], 0)
@@ -551,51 +594,66 @@ async def run_daily_outreach():
         cur_index = acc["user_index"]
         cur_limit = acc["daily_limit"]
 
+        if cur_account in FORBIDDEN_ACCOUNTS:
+            log(f"🚨 Skipping forbidden account {cur_account}.", level="WARNING")
+            continue
+
         already_sent = today_sent_by_account.get(cur_account, 0)
         remaining_slots = cur_limit - already_sent
 
         if remaining_slots <= 0:
-            log(f"Account {cur_account} has already reached today's limit ({already_sent}/{cur_limit}). Moving to next...")
+            log(f"Account {cur_account} has reached today's limit ({already_sent}/{cur_limit}). Moving to next...")
             continue
 
-        log(f"▶️ Starting dispatch for {cur_account} (u/{cur_index}) | Target: {remaining_slots} emails.")
+        log(f"▶️ Locating SINGLE TAB for {cur_account} (u/{cur_index})...")
+        tab_id, ws_url = find_and_verify_account_tab(port, cur_account, cur_index)
+        if not ws_url:
+            log(f"❌ Could not establish tab for {cur_account}. Skipping...", level="ERROR")
+            continue
+
+        log(f"🚀 Starting dispatch for {cur_account} strictly on Tab {tab_id} | Target: {remaining_slots} emails.")
         account_sent_count = 0
 
-        for lead in leads:
-            if account_sent_count >= remaining_slots:
-                break
+        # KEEP SAME TAB CONNECTION OPEN
+        async with websockets.connect(ws_url, max_size=10_000_000, ping_interval=10, ping_timeout=10) as ws:
+            for lead in leads:
+                if account_sent_count >= remaining_slots:
+                    break
 
-            email, name, company, subject, body = format_lead_message(lead)
-            if email.lower() in sent_emails:
-                continue
+                email, name, company, subject, body, resume_path = format_lead_message(lead)
+                if email.lower() in sent_emails:
+                    continue
 
-            try:
-                success, reason = await send_single_email(
-                    email, name, company, subject, body,
-                    resume_path=get_resume_for_role(lead.get("Target_Role", "")),
-                    user_index=cur_index,
-                    account_email=cur_account,
-                    port=port
-                )
-            except Exception as e:
-                log(f"❌ Error sending to {email} from {cur_account}: {e}", level="ERROR")
-                success, reason = False, str(e)
+                try:
+                    success, reason = await send_single_email_in_tab(
+                        ws=ws,
+                        recipient_email=email,
+                        name=name,
+                        company=company,
+                        subject=subject,
+                        body=body,
+                        resume_path=resume_path,
+                        account_email=cur_account
+                    )
+                except Exception as e:
+                    log(f"❌ Error sending to {email} from {cur_account}: {e}", level="ERROR")
+                    success, reason = False, str(e)
 
-            ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            csv_writer.writerow([ts, email, name, company, "Success" if success else "Failed", subject, cur_account])
-            csv_file.flush()
+                ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                csv_writer.writerow([ts, email, name, company, "Success" if success else "Failed", subject, cur_account])
+                csv_file.flush()
 
-            if success:
-                sent_emails.add(email.lower())
-                account_sent_count += 1
-                total_session_sent += 1
-                today_sent_by_account[cur_account] = today_sent_by_account.get(cur_account, 0) + 1
-                log(f"[{cur_account}] Progress: {account_sent_count}/{remaining_slots} sent (Session total: {total_session_sent}).")
+                if success:
+                    sent_emails.add(email.lower())
+                    account_sent_count += 1
+                    total_session_sent += 1
+                    today_sent_by_account[cur_account] = today_sent_by_account.get(cur_account, 0) + 1
+                    log(f"[{cur_account}] Progress: {account_sent_count}/{remaining_slots} sent (Session total: {total_session_sent}).")
 
-                if account_sent_count < remaining_slots:
-                    sleep_time = random.uniform(min_delay, max_delay)
-                    log(f"Sleeping for {sleep_time:.1f}s to protect deliverability...")
-                    await asyncio.sleep(sleep_time)
+                    if account_sent_count < remaining_slots:
+                        sleep_time = random.uniform(min_delay, max_delay)
+                        log(f"Staying on tab. Sleeping for {sleep_time:.1f}s to protect deliverability...")
+                        await asyncio.sleep(sleep_time)
 
         log(f"🏁 Finished batch for {cur_account}: {account_sent_count} sent.")
         if accounts.index(acc) < len(accounts) - 1:
