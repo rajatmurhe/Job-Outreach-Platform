@@ -1,137 +1,168 @@
-# 🚀 Autonomous Cold Outreach Engine (Standalone)
+# Pulse Outreach: Autonomous Job Application & Multi-Resume Routing Platform
 
-A self-contained, automated cold outreach project for **Rajat Murhe**. 
-**100% independent from Antigravity**—runs locally on macOS via native `launchd` and Python 3.11.
+[![Python](https://img.shields.io/badge/Python-3.11-009688?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Control%20Center-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Brave CDP](https://img.shields.io/badge/Brave-CDP%20Automation-FB542B?style=for-the-badge&logo=brave&logoColor=white)](https://brave.com/)
+[![Gmail Multi-Account](https://img.shields.io/badge/Gmail-Multi--Account%20Rotation-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](https://mail.google.com/)
+[![Dynamic Resumes](https://img.shields.io/badge/Dynamic-6--Resume%20Engine-8E75B2?style=for-the-badge)](resumes/)
+[![macOS launchd](https://img.shields.io/badge/macOS-launchd%20Daemon-000000?style=for-the-badge&logo=apple&logoColor=white)](com.rajatmurhe.outreach.plist)
 
----
+**Pulse Outreach** is an autonomous, background job application and recruiter outreach platform designed to apply for **AI, Machine Learning, and Software Engineering internships** at scale. 
 
-## 🌟 Key Features
+Unlike traditional email blast tools that use generic SMTP servers—which trigger spam filters, lack personalized attachments, or get domain-flagged—Pulse Outreach operates **directly inside real, authenticated Brave browser sessions via the Chrome DevTools Protocol (CDP)**. It sends authentic 1-to-1 emails directly through Gmail with zero focus disruption, human-like delays, customized product hooks, and an intelligent **6-resume dynamic router** that selects the ideal CV based on the target company's engineering domain.
 
-1. **Zero-Touch Morning Schedule**: Automatically executes every weekday morning at **9:30 AM** via native macOS `launchd`.
-2. **Silent Background Execution**: Interacts with Brave via Chrome DevTools Protocol (CDP) WebSocket without shifting windows or stealing typing focus.
-3. **Auto-Brave Detection**: If Brave isn't running on port 9222, the daemon automatically launches it with `--remote-debugging-port=9222`.
-4. **Multi-Account Rotation**: Rotates through authenticated Gmail accounts (`murherajat27@gmail.com`, `murherajat1@gmail.com`) up to safe daily limits (25 emails/day/account).
-5. **Resume & Verification**: Automatically attaches `Rajat_Murhe_Resume.pdf`, confirms attachment chip in DOM, and verifies sent delivery.
-6. **Zero Duplicate Guarantee**: Cross-checks all historical recipients in `emails_sent.csv` before dispatching.
-7. **Desktop Notifications**: Sends native macOS banner notifications upon batch completion.
+> **Design Philosophy:** 100% independent and local. No external SaaS subscriptions, no third-party email blasters, and zero window-focus stealing while you work or code.
 
 ---
 
-## 📁 Project Structure
+## Product Walkthrough & Screenshots
+
+### 1. Visual Control Center & Multi-Account Quotas
+
+![Pulse Outreach web admin dashboard with live account quotas, active daemon status, and metrics cards](docs/screenshots/dashboard-overview.png)
+
+The central command dashboard runs locally at `http://localhost:5050`. It tracks real-time progress across all connected sender accounts, monitors all-time vs. daily send counts, displays live Brave CDP connectivity status, and provides immediate controls to start, pause, or inspect the background daemon.
+
+### 2. Research-Ranked Priority Lead Queue
+
+![Leads queue table ordered by research fit score with personalized hooks and role alignments](docs/screenshots/leads-priority-queue.png)
+
+Alphabetical outreach wastes daily quotas on generic IT staffing agencies. Pulse Outreach ingests master lead databases (1,800+ verified recruiters) and ranks them using multi-agent company research:
+- **Tier 1 Elite Fit:** High-growth AI unicorns and deep-tech platforms (**SirionLabs, Roboflow, Prodigal, Recro, Claim Genius, Supervity, Ressl AI, SigNoz**) appear at the absolute top of the queue.
+- **Contextual Hooks:** Injects custom 1-sentence openers connecting what each company builds to Rajat's specific flagship projects.
+
+### 3. Live Email & Dynamic Resume Preview Modal
+
+![Email preview modal displaying custom body and dynamically selected resume chip](docs/screenshots/email-preview-modal.png)
+
+Before or during any batch, clicking **Preview** renders the exact message that will be delivered to that recruiter. The modal verifies:
+- Recruiter first-name resolution (falling back to "Hiring Team" for generic inboxes).
+- Tailored subject line prefixed with `Application: <Target_Role> Opportunities at <Company> - Rajat Murhe`.
+- Context-specific body referencing matching projects.
+- **Dynamic Resume Badge:** Visually confirms which specialized PDF (`Rajat-CV.pdf` for RAG/LegalTech, `Rajat-Resume.pdf` for Computer Vision, `Rajat.pdf` for Multi-Agent platforms) will be physically attached.
+
+---
+
+## Dynamic 6-Resume Routing Engine
+
+Sending one generic CV to every employer lowers interview conversion. Pulse Outreach includes 6 distinct resume variants, automatically matched to the recruiter's exact role category:
+
+| Specialized Resume | Target Role Category | Emphasized Projects & Technical Focus | Example Target Companies |
+| :--- | :--- | :--- | :--- |
+| [`Rajat.pdf`](Rajat.pdf) | **Agentic & GenAI Platforms** | LangGraph multi-agent workflows, MCP tool integration, CI/CD eval harnesses, DCS AI API connectors | **Shipsy**, **Pixis**, **Secomind.AI**, **Recro**, **Supervity** |
+| [`Rajat-Murhe.pdf`](Rajat-Murhe.pdf) | **Voice, Conversational & Clinical AI** | ClinicVoice AI (Whisper, XTTS v2, multilingual), NeuroAI (explainable diagnostics), safety guardrails | **Suki**, **Observe.AI**, **BUDDI AI**, **Prodigal**, **Haptik** |
+| [`Rajat-Resume.pdf`](Rajat-Resume.pdf) | **Computer Vision & Video AI** | FieldProof AI (Gemini video QA), RV Vision Tiny (PyTorch detector from scratch), GIoU/BCE loss, mAP evals | **Detect Technologies**, **Wobot.ai**, **Roboflow**, **Claim Genius** |
+| [`Rajat-CV.pdf`](Rajat-CV.pdf) | **RAG, Document AI & LegalTech** | ContractIQ (verbatim source quote RAG, prompt defense), Linkific Enterprise RAG (pgvector + Groq) | **SirionLabs**, **Leena AI**, **Lumiq**, **Lentra** |
+| [`Rajat-Murhe-Resume.pdf`](Rajat-Murhe-Resume.pdf) | **Machine Learning & Systems** | SentinelAI (Isolation Forest, Tree SHAP anomaly detection), CreditX risk classifier, telemetry | **Pelican.ai**, **bluCognition**, **SigNoz**, **Zendrive** |
+| [`Rajat-Murhe-CV.pdf`](Rajat-Murhe-CV.pdf) | **Full-Stack AI & General SWE** | End-to-end full-stack AI engineering, Next.js, FastAPI, Node.js, Docker, live product deployment across 3 internships | **Trilogy**, **Dassault Systems**, **Increff**, Master Tech list |
 
 ```text
-LINKEDIN DM/
-├── config.json                     # Outreach configuration (accounts, caps, delays)
-├── daily_outreach_daemon.py        # Master autonomous daemon script
-├── manage_daemon.sh                # Management CLI (status, run-now, logs, install)
-├── com.rajatmurhe.outreach.plist   # macOS launchd service definition
-├── Rajat_Murhe_Resume.pdf          # Attached resume PDF
-├── todays_outreach_queue.csv       # Active lead pool with personalized hooks
-├── emails_sent.csv                 # Master tracking and deduplication history
-└── logs/                           # Daily execution logs and launchd stdout/err
+[Recruiter: SirionLabs] ────► Role: Contract Intelligence ──► Attaches: Rajat-CV.pdf
+[Recruiter: Roboflow]   ────► Role: Computer Vision       ──► Attaches: Rajat-Resume.pdf
+[Recruiter: Prodigal]   ────► Role: Speech Intelligence   ──► Attaches: Rajat-Murhe.pdf
+[Recruiter: Recro]      ────► Role: Agentic Systems       ──► Attaches: Rajat.pdf
+[Recruiter: Increff]    ────► Role: Software Engineering  ──► Attaches: Rajat-Murhe-CV.pdf
 ```
 
 ---
 
-## 🖥️ Web Admin Dashboard
+## Autonomous Execution & Browser Automation Proof
 
-Launch your visual control center anytime by running:
+### Silent Background Tab Activation (`daily_outreach_daemon.py`)
+Traditional automation tools (e.g., standard Selenium or Playwright `bring_to_front`) force window switching, stealing macOS keyboard and cursor focus. Pulse Outreach uses low-level Chrome DevTools Protocol targets:
+1. **Target Discovery:** Queries `GET http://localhost:9222/json/list` to find the exact Gmail profile (`u/5` or `u/7`).
+2. **Silent Activation:** Uses `Target.activateTarget` over WebSocket to unthrottle V8 background timers without bringing the macOS window to the foreground.
+3. **Background Compose:** Triggers Gmail's native `Compose` action, populates recipient and subject via DOM value setters, and types the body using `document.execCommand("insertText")` to preserve formatting.
+4. **File Attachment Verification:** Selects the dynamically matched PDF via `DOM.setFileInputFiles` and polls the dialog DOM until the visual attachment chip confirms the upload completed.
+5. **Send & Alert Validation:** Clicks the native `Send` button and validates that the compose dialog successfully closes and the `"Message sent"` toast appears.
+
+### Multi-Account Round-Robin & Deliverability Guardrails
+- **Daily Quota Caps:** Strict 25 emails/day per sender account (total 50 emails/day across accounts). Once Account 1 reaches 25, the engine switches automatically to Account 2.
+- **Human Jitter:** Delays of **45 to 75 seconds** between dispatches protect domain reputation and prevent spam traps.
+- **Idempotent Deduplication:** Every dispatch is recorded immediately in `emails_sent.csv`. The engine cross-references past sent emails on every cycle—**zero duplicate applications are ever sent**.
+
+---
+
+## Technology Stack
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Browser Automation** | Brave Browser, Chrome DevTools Protocol (CDP), WebSockets, JavaScript DOM Injection |
+| **Web Control Center** | Python 3.11, FastAPI, Uvicorn, HTML5, Tailwind CSS, Vanilla JavaScript |
+| **Data & Queue Processing** | Pandas, OpenPyXL, CSV, JSON, Heuristic Classification & Regex |
+| **Daemon & OS Integration** | macOS `launchd`, LaunchAgent Plist, AppleScript (`osascript`) Desktop Banners |
+| **Quality & Verification** | Python `unittest`, Pytest, Playwright (Headless Visual Regression & Telemetry Verification) |
+
+---
+
+## Repository Guide
+
+| File / Folder | Contents |
+| :--- | :--- |
+| [`daily_outreach_daemon.py`](daily_outreach_daemon.py) | Master autonomous daemon: CDP automation, silent Gmail dispatch, multi-account rotation |
+| [`server.py`](server.py) | FastAPI backend serving dashboard APIs, live metrics, and email preview generation |
+| [`build_prioritized_queue.py`](build_prioritized_queue.py) | Multi-tier queue builder: sorts leads by company AI fit, deduplicates against sent logs |
+| [`config.json`](config.json) | Central configuration: accounts, daily caps, CDP port, delay ranges, and schedule |
+| [`manage_daemon.sh`](manage_daemon.sh) | CLI manager: start, pause, view logs, run manual batches, install/uninstall launchd |
+| [`dashboard.sh`](dashboard.sh) | Quick-launch script for the web control center on port 5050 |
+| [`com.rajatmurhe.outreach.plist`](com.rajatmurhe.outreach.plist) | macOS `launchd` service definition for automated 9:30 AM weekday runs |
+| [`todays_outreach_queue.csv`](todays_outreach_queue.csv) | Active queue of 1,800+ prioritized recruiter leads with tailored roles and hooks |
+| [`emails_sent.csv`](emails_sent.csv) | Master log of all sent applications with timestamps, roles, and sender accounts |
+| [`resumes/`](resumes/) | Directory containing all 6 specialized role-matched resume PDFs |
+| [`static/`](static/) | Web assets: modern responsive dashboard UI (`index.html`, `app.js`) |
+| [`docs/screenshots/`](docs/screenshots/) | High-resolution production interface screenshots used throughout documentation |
+
+---
+
+## Quickstart & Local Setup
+
+### 1. Prerequisites
+- macOS Sonoma or Sequoia
+- Python 3.11+
+- Brave Browser installed
+
+### 2. Installation
+Clone the repository and install the dependencies:
+```bash
+git clone git@github.com:rajatmurhe/Job-Outreach-Platform.git
+cd Job-Outreach-Platform
+
+pip install -r requirements.txt # or install fastapi uvicorn pandas websockets openpyxl
+```
+
+### 3. Launching Brave with Remote Debugging
+Open Brave with CDP remote debugging active on port 9222:
+```bash
+/Applications/Brave\ Browser.app/Contents/MacOS/Brave\ Browser --remote-debugging-port=9222 &
+```
+*(Ensure you are logged into your sending accounts in user profiles `u/5` and `u/7`)*.
+
+### 4. Running the Web Dashboard
+Start the visual control center:
 ```bash
 ./dashboard.sh
-# OR
-./manage_daemon.sh dashboard
 ```
-Then open **[http://localhost:8501](http://localhost:8501)** in your browser!
+Open [http://localhost:5050](http://localhost:5050) in your browser.
 
-### What You Can Do in the Dashboard:
-1. **📄 Resume Manager**: Drag-and-drop a new PDF resume. It automatically backs up the old version, replaces `Rajat_Murhe_Resume.pdf`, and verifies the checksum.
-2. **👥 Add & Manage Leads**:
-   - Upload Excel (`.xlsx`) or CSV (`.csv`) recruiter lists with auto-mapping.
-   - Automatically filters out already-contacted and queued duplicates.
-   - Manually add single leads with custom roles and hooks.
-   - Search and inspect all waiting leads.
-3. **⚙️ Account Settings**: Toggle inboxes on/off, adjust daily caps (e.g. 25/day), adjust delay sliders (45–75s), and save changes directly.
-4. **📊 Real-time Stats**: View today's progress bars per account, total delivered, and searchable history.
-5. **🚀 Manual Trigger**: Trigger outreach immediately with 1 click or pause/resume the 9:30 AM scheduler.
+### 5. Running Outreach
+- **Manual Single Batch:**
+  ```bash
+  ./manage_daemon.sh run-now
+  ```
+- **Install Scheduled Weekday Morning Daemon (09:30 AM):**
+  ```bash
+  ./manage_daemon.sh install
+  ```
+- **Inspect Live Activity Logs:**
+  ```bash
+  ./manage_daemon.sh logs
+  ```
 
 ---
 
-## ⚙️ Quick Management CLI
+## Safeguards & Production Boundaries
 
-Use `./manage_daemon.sh` to control the daemon from Terminal:
-
-### 1. Check Status & Today's Sent Stats
-```bash
-./manage_daemon.sh status
-```
-Displays whether the macOS schedule is active, how many emails were sent today, account breakdown, and recent logs.
-
-### 2. Trigger Outreach Manually (Run Now)
-```bash
-./manage_daemon.sh run-now
-```
-Runs today's batch immediately in the terminal without waiting for 9:30 AM.
-
-### 3. View Live Logs
-```bash
-./manage_daemon.sh logs
-```
-Tails today's execution log file in real time.
-
-### 4. Enable / Disable Automated Schedule
-```bash
-# Enable 9:30 AM weekday schedule:
-./manage_daemon.sh install
-
-# Disable schedule:
-./manage_daemon.sh uninstall
-```
-
----
-
-## 🛠️ Configuration (`config.json`)
-
-To change accounts, daily caps, or delays, simply edit `config.json`:
-
-```json
-{
-  "accounts": [
-    {
-      "account": "murherajat27@gmail.com",
-      "user_index": 5,
-      "daily_limit": 25,
-      "enabled": true
-    },
-    {
-      "account": "murherajat1@gmail.com",
-      "user_index": 7,
-      "daily_limit": 25,
-      "enabled": true
-    },
-    {
-      "account": "rajatmurhe1@gmail.com",
-      "user_index": 1,
-      "daily_limit": 25,
-      "enabled": false
-    }
-  ],
-  "cdp_port": 9222,
-  "delays": {
-    "min_seconds": 45,
-    "max_seconds": 75
-  },
-  "schedule": {
-    "hour": 9,
-    "minute": 30,
-    "weekdays_only": true
-  },
-  "desktop_notifications": true
-}
-```
-
----
-
-## 📊 Historical Data & Tracking
-
-- All sent applications are recorded in [`emails_sent.csv`](file:///Users/rajatmurhe/Desktop/LINKEDIN%20DM/emails_sent.csv) with timestamp, recipient email, name, company, delivery status, subject, and sender account.
-- Unsent leads are pulled from [`todays_outreach_queue.csv`](file:///Users/rajatmurhe/Desktop/LINKEDIN%20DM/todays_outreach_queue.csv). If the queue runs low (<30 leads), the daemon automatically replenishes from master lead files.
+1. **Strictly 1-to-1 Delivery:** Does not use BCC or CC batching. Each email is composed and delivered individually.
+2. **Account Health Preservation:** Enforces a hard stop at 25 emails per account per day. Even if the queue contains 1,800 leads, daily quota ceilings cannot be breached without explicit manual config changes.
+3. **Failsafe Attachment Verification:** If a resume PDF is missing or fails to upload to the compose modal within 12 seconds, the email dispatch aborts immediately and discards the draft rather than sending an empty application.
+4. **Data Isolation:** All personal application logs and recruiter records remain local to your machine. No external servers or telemetry tracking are used.
