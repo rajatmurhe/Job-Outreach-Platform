@@ -158,17 +158,26 @@ def get_gmail_tab_ws(port, user_index, account_email):
 def get_resume_for_role(role, base_dir=BASE_DIR):
     role_lower = (role or '').lower()
     if any(k in role_lower for k in ['agent', 'multi-agent', 'orchestrat', 'genai platform', 'mcp']):
-        candidate = 'Rajat.pdf'
+        candidates = ['resume_agentic_ai.pdf', 'Rajat.pdf', 'resume.pdf']
     elif any(k in role_lower for k in ['voice', 'clinical', 'speech', 'dialogue', 'conversational', 'healthcare']):
-        candidate = 'Rajat-Murhe.pdf'
+        candidates = ['resume_voice_conversational.pdf', 'Rajat-Murhe.pdf', 'resume.pdf']
     elif any(k in role_lower for k in ['vision', 'video', 'cv', 'image', 'multimodal', 'object detect']):
-        candidate = 'Rajat-Resume.pdf'
+        candidates = ['resume_computer_vision.pdf', 'Rajat-Resume.pdf', 'resume.pdf']
     elif any(k in role_lower for k in ['rag', 'document', 'contract', 'legal', 'retrieval', 'nlp']):
-        candidate = 'Rajat-CV.pdf'
+        candidates = ['resume_rag_nlp.pdf', 'Rajat-CV.pdf', 'resume.pdf']
     elif any(k in role_lower for k in ['anomaly', 'threat', 'risk', 'telematics', 'machine learning', 'data science', 'data ai', 'cloud ai', 'infrastructure', 'deep learning']):
-        candidate = 'Rajat-Murhe-Resume.pdf'
+        candidates = ['resume_ml_systems.pdf', 'Rajat-Murhe-Resume.pdf', 'resume.pdf']
     else:
-        candidate = 'Rajat-Murhe-CV.pdf'
+        candidates = ['resume_general_swe.pdf', 'Rajat-Murhe-CV.pdf', 'Rajat_Murhe_Resume.pdf', 'resume.pdf']
+
+    for c in candidates:
+        p = os.path.join(base_dir, c)
+        if os.path.isfile(p):
+            return p
+        sub_p = os.path.join(base_dir, 'resumes', c)
+        if os.path.isfile(sub_p):
+            return sub_p
+    return os.path.join(base_dir, 'resume.pdf')
 
     p = os.path.join(base_dir, candidate)
     if os.path.isfile(p):

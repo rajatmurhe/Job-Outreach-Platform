@@ -344,6 +344,79 @@ async def upload_leads_file(file: UploadFile = File(...)):
             os.remove(temp_path)
 
 
+
+def get_resume_for_role(role, base_dir=BASE_DIR):
+    role_lower = (role or '').lower()
+    if any(k in role_lower for k in ['agent', 'multi-agent', 'orchestrat', 'genai platform', 'mcp']):
+        candidates = ['resume_agentic_ai.pdf', 'Rajat.pdf', 'resume.pdf']
+    elif any(k in role_lower for k in ['voice', 'clinical', 'speech', 'dialogue', 'conversational', 'healthcare']):
+        candidates = ['resume_voice_conversational.pdf', 'Rajat-Murhe.pdf', 'resume.pdf']
+    elif any(k in role_lower for k in ['vision', 'video', 'cv', 'image', 'multimodal', 'object detect']):
+        candidates = ['resume_computer_vision.pdf', 'Rajat-Resume.pdf', 'resume.pdf']
+    elif any(k in role_lower for k in ['rag', 'document', 'contract', 'legal', 'retrieval', 'nlp']):
+        candidates = ['resume_rag_nlp.pdf', 'Rajat-CV.pdf', 'resume.pdf']
+    elif any(k in role_lower for k in ['anomaly', 'threat', 'risk', 'telematics', 'machine learning', 'data science', 'data ai', 'cloud ai', 'infrastructure', 'deep learning']):
+        candidates = ['resume_ml_systems.pdf', 'Rajat-Murhe-Resume.pdf', 'resume.pdf']
+    else:
+        candidates = ['resume_general_swe.pdf', 'Rajat-Murhe-CV.pdf', 'Rajat_Murhe_Resume.pdf', 'resume.pdf']
+
+    for c in candidates:
+        if os.path.isfile(os.path.join(base_dir, c)):
+            return c
+        if os.path.isfile(os.path.join(base_dir, 'resumes', c)):
+            return c
+    return 'resume.pdf'
+
+
+@app.post("/api/leads/preview")
+def preview_lead_email(lead: Dict[str, Any]):
+    comp = lead.get("company", "Company")
+    raw_name = lead.get("contact_name", "Hiring Team").strip()
+    role = lead.get("target_role", "AI Engineering Intern").strip()
+    em = lead.get("email", "").strip()
+    hook = lead.get("personalized_hook", "").strip()
+
+    if any(term in raw_name.lower() for term in ["team", "inbox", "support", "contact", "not established"]):
+        name = "Hiring Team"
+    else:
+        name = raw_name.split()[0].strip() if raw_name else "Hiring Team"
+
+    subject = f"Application: {role} Opportunities at {comp} - Rajat Murhe"
+
+    if not hook:
+        hook = f"I've been following what {comp} is building in applied AI and tech innovation."
+
+    body = f"""Hi {name},
+
+I'm Rajat Murhe, a final year CS student (AI and ML) at VIT Chennai, based in Pune. I'm writing to apply for internship or entry level opportunities at {comp}, especially for the {role} role.
+
+{hook}
+
+A few things I've built:
+1. ClinicVoice AI: a voice agent that books real appointments on Google Calendar, with safety checks and tests (github.com/rajatmurhe/clinicvoice-ai)
+2. ContractIQ: a contract review app that answers with the exact source quote (github.com/rajatmurhe/contractiq)
+3. FieldProof AI: Gemini reviews field work videos, with human review and an audit trail (github.com/rajatmurhe/fieldproof-ai)
+
+I have also done three internships across AI engineering and product testing, on live products.
+
+My resume is attached for your reference. If there is an opening, or someone else I should speak to, I would be grateful for your guidance. I can start right away and learn fast.
+
+Thank you for your time.
+
+Best regards,
+Rajat Murhe
++91 7507661881
+linkedin.com/in/rajat-murhe | github.com/rajatmurhe"""
+
+    return {
+        "subject": subject,
+        "recipient": em,
+        "name": name,
+        "body": body,
+        "attachment": get_resume_for_role(role)
+    }
+
+
 @app.delete("/api/leads/{email}")
 def delete_lead(email: str):
     em = email.strip().lower()

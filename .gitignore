@@ -6,3 +6,9 @@ __pycache__/
 .env
 logs/*.log
 !logs/.gitkeep
+
+# Ignore personal resume PDFs
+*.pdf
+resumes/*.pdf
+!resumes/README.md
+!resumes/.gitkeep
