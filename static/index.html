@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulse Outreach — Autonomous Cold Outreach Platform</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            zinc: {
+              850: '#1b1b1e',
+              900: '#131316',
+              925: '#0f0f12',
+              950: '#09090b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #09090b; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+    /* Glassmorphism & Ambient Glow */
+    .glass-card {
+      background: rgba(19, 19, 22, 0.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-card-hover {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(99, 102, 241, 0.35);
+      box-shadow: 0 0 25px -4px rgba(99, 102, 241, 0.12);
+      transform: translateY(-1px);
+    }
+    .ambient-glow {
+      position: absolute;
+      width: 550px;
+      height: 550px;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.10;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .ambient-glow-indigo {
+      background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+    }
+    .ambient-glow-emerald {
+      background: radial-gradient(circle, #10b981 0%, transparent 70%);
+    }
+    .ambient-glow-purple {
+      background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
+    }
+
+    /* Pulse dot animation */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.1); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .pulse-ring {
+      animation: pulse-ring 2.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans antialiased min-h-screen relative overflow-x-hidden selection:bg-brand-600 selection:text-white">
+
+  <!-- Ambient Glow Backgrounds -->
+  <div class="ambient-glow ambient-glow-indigo -top-32 -left-32"></div>
+  <div class="ambient-glow ambient-glow-emerald top-1/2 -right-32"></div>
+  <div class="ambient-glow ambient-glow-purple bottom-10 left-1/4"></div>
+
+  <!-- Main Grid Wrapper -->
+  <div class="flex h-screen overflow-hidden relative z-10">
+
+    <!-- =====================================================================
+         SIDEBAR NAVIGATION
+         ===================================================================== -->
+    <aside class="w-64 border-r border-zinc-800/80 bg-zinc-925/70 backdrop-blur-2xl flex flex-col justify-between shrink-0 shadow-2xl">
+      
+      <!-- Brand & Profile -->
+      <div>
+        <!-- Logo -->
+        <div class="h-16 flex items-center gap-3 px-6 border-b border-zinc-800/80">
+          <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-brand-500/25">
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5">
+              Pulse<span class="text-brand-400">AI</span>
+              <span class="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30">Pro</span>
+            </div>
+            <div class="text-[11px] text-zinc-400 font-medium">Autonomous Outreach</div>
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="p-4 space-y-1">
+          <button onclick="switchTab('overview')" id="nav-overview" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-white bg-zinc-800/90 border border-zinc-700/60 shadow-sm transition">
+            <i data-lucide="layout-dashboard" class="w-4 h-4 text-brand-400"></i>
+            <span>Overview & Fleet</span>
+          </button>
+
+          <button onclick="switchTab('leads')" id="nav-leads" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Leads Pipeline</span>
+            <span id="badge-unsent-leads" class="ml-auto text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300">0</span>
+          </button>
+
+          <button onclick="switchTab('resume')" id="nav-resume" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            <span>Resume Studio</span>
+          </button>
+
+          <button onclick="switchTab('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition">
+            <i data-lucide="sliders" class="w-4 h-4"></i>
+            <span>Fleet Settings</span>
+          </button>
+
+          <button onclick="switchTab('logs')" id="nav-logs" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition">
+            <i data-lucide="terminal" class="w-4 h-4"></i>
+            <span>Engine Telemetry</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Engine Status & Profile Footer -->
+      <div class="p-4 border-t border-zinc-800/80 space-y-3">
+        <!-- Live Service Pill -->
+        <div class="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/90 text-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-zinc-400 font-medium">9:30 AM Daemon</span>
+            <span id="daemon-status-pill" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-zinc-400">
+            <span>Brave CDP (9222)</span>
+            <span id="brave-status-pill" class="text-emerald-400 font-medium flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connected
+            </span>
+          </div>
+        </div>
+
+        <!-- User Profile Card -->
+        <div class="flex items-center gap-3 px-2 py-1">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-600 via-indigo-500 to-purple-600 flex items-center justify-center font-bold text-xs text-white uppercase shadow-md">
+            RM
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-xs font-semibold text-zinc-200 truncate">Rajat Murhe</div>
+            <div class="text-[11px] text-zinc-400 truncate">VIT Chennai • CS AI/ML</div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- =====================================================================
+         MAIN CONTENT AREA
+         ===================================================================== -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+
+      <!-- Top Header / Quick Action Bar -->
+      <header class="h-16 border-b border-zinc-800/80 bg-zinc-925/60 backdrop-blur-xl px-8 flex items-center justify-between shrink-0 sticky top-0 z-20 shadow-sm">
+        <div>
+          <h1 id="page-title" class="text-base font-bold text-white tracking-tight">Overview & Fleet Telemetry</h1>
+          <p id="page-subtitle" class="text-xs text-zinc-400">Live outreach performance and multi-account automation.</p>
+        </div>
+
+        <!-- Quick Controls -->
+        <div class="flex items-center gap-3">
+          <!-- Live Engine Status Badge -->
+          <div id="engine-live-indicator" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-ring"></span>
+            <span class="text-zinc-300 font-medium">Fleet Ready</span>
+          </div>
+
+          <button onclick="refreshData()" class="p-2 rounded-lg bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 transition shadow-sm" title="Refresh Live Data">
+            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+          </button>
+
+          <button onclick="stopOutreach()" id="btn-stop-engine" class="hidden items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 transition shadow-sm">
+            <i data-lucide="square" class="w-3.5 h-3.5 fill-current"></i>
+            <span>Stop Engine</span>
+          </button>
+
+          <button onclick="triggerOutreachNow()" id="btn-trigger-engine" class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/30 transition transform active:scale-95">
+            <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+            <span>Launch Batch Now</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Container -->
+      <div class="p-8 space-y-8 flex-1">
+
+        <!-- =================================================================
+             1. TAB: OVERVIEW & FLEET
+             ================================================================= -->
+        <div id="tab-overview" class="tab-content space-y-8">
+
+          <!-- Hero Metrics Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+            
+            <!-- Card 1: Today Sent -->
+            <div class="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden transition group">
+              <div class="flex items-center justify-between text-zinc-400 mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider">Delivered Today</span>
+                <div class="p-2 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                  <i data-lucide="send" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span id="metric-today-sent" class="text-3xl font-extrabold text-white tracking-tight">0</span>
+                <span class="text-xs text-zinc-400">/ 50 target</span>
+              </div>
+              <div class="w-full bg-zinc-800/80 rounded-full h-1.5 mt-4 overflow-hidden">
+                <div id="metric-today-progress" class="bg-gradient-to-r from-brand-600 to-indigo-400 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Card 2: All Time Delivered -->
+            <div class="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden transition group">
+              <div class="flex items-center justify-between text-zinc-400 mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider">All-Time Reached</span>
+                <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <i data-lucide="check-check" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span id="metric-all-time" class="text-3xl font-extrabold text-white tracking-tight">0</span>
+                <span class="text-xs text-emerald-400 font-medium">0 duplicates</span>
+              </div>
+              <div class="text-[11px] text-zinc-400 mt-4 flex items-center gap-1.5">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Strict deduplication active</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Queue Depth -->
+            <div class="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden transition group">
+              <div class="flex items-center justify-between text-zinc-400 mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider">Pipeline Queue</span>
+                <div class="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  <i data-lucide="layers" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span id="metric-queue-unsent" class="text-3xl font-extrabold text-white tracking-tight">0</span>
+                <span class="text-xs text-zinc-400">leads ready</span>
+              </div>
+              <div class="text-[11px] text-zinc-400 mt-4 flex items-center justify-between">
+                <span>Total Pool: <strong id="metric-queue-total" class="text-zinc-200 font-mono">0</strong></span>
+                <button onclick="switchTab('leads')" class="text-brand-400 hover:text-brand-300 font-medium hover:underline text-xs">Manage &rarr;</button>
+              </div>
+            </div>
+
+            <!-- Card 4: Active Fleet -->
+            <div class="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden transition group">
+              <div class="flex items-center justify-between text-zinc-400 mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider">Sending Fleet</span>
+                <div class="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <i data-lucide="mail-check" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span id="metric-active-accounts" class="text-3xl font-extrabold text-white tracking-tight">2</span>
+                <span class="text-xs text-zinc-400">inboxes active</span>
+              </div>
+              <div class="text-[11px] text-zinc-400 mt-4 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Max 25/day per inbox safety</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Accounts Fleet Visualizer -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-base font-bold text-white tracking-tight">Active Inboxes & Daily Quotas</h2>
+                <p class="text-xs text-zinc-400">Real-time health and progress towards daily spam-safety limits.</p>
+              </div>
+              <button onclick="switchTab('settings')" class="text-xs font-semibold text-brand-400 hover:text-brand-300 flex items-center gap-1">
+                <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                <span>Configure Inboxes</span>
+              </button>
+            </div>
+
+            <div id="accounts-fleet-grid" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <!-- Dynamically populated by JS -->
+            </div>
+          </div>
+
+          <!-- Recent Applications Activity Table -->
+          <div class="glass-card rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 class="text-base font-bold text-white tracking-tight">Recent Deliveries</h2>
+                <p class="text-xs text-zinc-400">Every application sent with verified resume attachment.</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="relative w-64">
+                  <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-zinc-500"></i>
+                  <input type="text" id="filter-recent-sends" placeholder="Filter company, email, name..." oninput="filterRecentSends()" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-9 pr-3.5 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-brand-500 transition">
+                </div>
+                <a href="/api/sent/export" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 transition" title="Export complete history to CSV">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                  <span>Export CSV</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto border border-zinc-800/80 rounded-xl">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-zinc-900/80 text-zinc-400 uppercase font-bold tracking-wider text-[10px] border-b border-zinc-800">
+                  <tr>
+                    <th class="py-3 px-4">Company & Recruiter</th>
+                    <th class="py-3 px-4">Email</th>
+                    <th class="py-3 px-4">Subject Line</th>
+                    <th class="py-3 px-4">Sending Inbox</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4">Timestamp</th>
+                    <th class="py-3 px-4 text-right">Preview</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-sends-tbody" class="divide-y divide-zinc-800/60 font-medium">
+                  <!-- Dynamically populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =================================================================
+             2. TAB: LEADS PIPELINE
+             ================================================================= -->
+        <div id="tab-leads" class="tab-content hidden space-y-8">
+          
+          <!-- Dropzone & Quick Actions -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Excel / CSV Dropzone (2 cols) -->
+            <div class="lg:col-span-2 glass-card rounded-2xl p-6 relative overflow-hidden">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h2 class="text-base font-bold text-white tracking-tight">Import Recruiter Leads</h2>
+                  <p class="text-xs text-zinc-400">Upload Excel (.xlsx) or CSV files. Automatically deduplicates against past sends.</p>
+                </div>
+                <div class="px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 text-xs font-semibold flex items-center gap-1.5">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                  <span>Auto-Column Mapping</span>
+                </div>
+              </div>
+
+              <!-- Interactive Dropzone Area -->
+              <div id="dropzone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" onclick="document.getElementById('file-leads-input').click()" class="border-2 border-dashed border-zinc-700/80 hover:border-brand-500 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-zinc-900/40 hover:bg-brand-500/5 group">
+                <input type="file" id="file-leads-input" accept=".xlsx, .csv" class="hidden" onchange="uploadLeadsFile(this.files[0])">
+                <div class="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-brand-400 group-hover:scale-110 transition shadow-inner mb-3">
+                  <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                </div>
+                <div class="text-sm font-semibold text-zinc-200">Drag & drop your leads file here</div>
+                <div class="text-xs text-zinc-400 mt-1">Supports Excel (<span class="text-zinc-300 font-mono">.xlsx</span>) and CSV (<span class="text-zinc-300 font-mono">.csv</span>) spreadsheets</div>
+                <div class="mt-3 text-[11px] font-medium text-brand-400 bg-brand-500/10 px-3 py-1 rounded-full border border-brand-500/20">or browse from your Mac</div>
+              </div>
+
+              <!-- Uploading Indicator -->
+              <div id="upload-status" class="hidden mt-3 p-3 rounded-lg bg-zinc-850 text-xs text-zinc-300 border border-zinc-800 items-center gap-2"></div>
+            </div>
+
+            <!-- Add Single Lead Card (1 col) -->
+            <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+              <div>
+                <h2 class="text-base font-bold text-white tracking-tight mb-1">Add Individual Lead</h2>
+                <p class="text-xs text-zinc-400 mb-4">Quickly insert a single targeted recruiter or founder into the queue.</p>
+                <div class="space-y-3">
+                  <input type="text" id="manual-company" placeholder="Company Name (e.g. Hevo Data)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-brand-500">
+                  <input type="text" id="manual-name" placeholder="Contact Name (e.g. Priya / Hiring Team)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-brand-500">
+                  <input type="email" id="manual-email" placeholder="Recruiter Email (e.g. priya@hevo.com)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-brand-500">
+                  <input type="text" id="manual-role" value="AI Engineering Intern" placeholder="Target Role" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-brand-500">
+                </div>
+              </div>
+
+              <button onclick="submitManualLead()" class="mt-4 w-full py-2.5 rounded-lg text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-brand-600/25 transition">
+                + Add Lead to Active Queue
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Leads Data Grid -->
+          <div class="glass-card rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 class="text-base font-bold text-white tracking-tight">Active Pipeline Queue</h2>
+                <p class="text-xs text-zinc-400">Leads queued for dispatch. Filtered against past sends.</p>
+              </div>
+
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- Filter Pills -->
+                <div class="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-1 text-xs">
+                  <button onclick="setLeadsFilter('all')" id="btn-filter-all" class="px-2.5 py-1 rounded-md font-semibold text-white bg-zinc-800 transition">All (<span id="count-all">0</span>)</button>
+                  <button onclick="setLeadsFilter('queued')" id="btn-filter-queued" class="px-2.5 py-1 rounded-md font-semibold text-zinc-400 hover:text-white transition">Queued (<span id="count-queued">0</span>)</button>
+                  <button onclick="setLeadsFilter('sent')" id="btn-filter-sent" class="px-2.5 py-1 rounded-md font-semibold text-zinc-400 hover:text-white transition">Sent (<span id="count-sent">0</span>)</button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative w-44">
+                  <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-2.5 text-zinc-500"></i>
+                  <input type="text" id="filter-leads-input" placeholder="Search..." oninput="filterLeadsTable()" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-brand-500 transition">
+                </div>
+
+                <!-- Action Buttons -->
+                <a href="/api/leads/export" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 transition" title="Export Queue to CSV">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                  <span>Export</span>
+                </a>
+                <button onclick="cleanSentLeads()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 transition" title="Purge already delivered leads from queue">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-400"></i>
+                  <span>Purge Sent</span>
+                </button>
+                <button onclick="clearAllLeads()" class="p-1.5 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition" title="Clear entire queue">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto border border-zinc-800/80 rounded-xl">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-zinc-900/80 text-zinc-400 uppercase font-bold tracking-wider text-[10px] border-b border-zinc-800">
+                  <tr>
+                    <th class="py-3 px-4">Priority</th>
+                    <th class="py-3 px-4">Company</th>
+                    <th class="py-3 px-4">Contact Person</th>
+                    <th class="py-3 px-4">Email</th>
+                    <th class="py-3 px-4">Target Role</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="leads-tbody" class="divide-y divide-zinc-800/60 font-medium">
+                  <!-- Dynamically populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =================================================================
+             3. TAB: RESUME STUDIO
+             ================================================================= -->
+        <div id="tab-resume" class="tab-content hidden space-y-8">
+          
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Resume Details & Uploader (1 col) -->
+            <div class="space-y-6">
+              
+              <!-- Active Resume Card -->
+              <div class="glass-card rounded-2xl p-6 space-y-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center">
+                    <i data-lucide="file-text" class="w-6 h-6"></i>
+                  </div>
+                  <div>
+                    <h2 class="text-base font-bold text-white tracking-tight">Active Resume PDF</h2>
+                    <p class="text-xs text-zinc-400">Attached to all outbound applications</p>
+                  </div>
+                </div>
+
+                <div class="space-y-2.5 pt-2 text-xs border-t border-zinc-800/80">
+                  <div class="flex justify-between text-zinc-400">
+                    <span>Filename</span>
+                    <span id="resume-filename" class="font-mono text-zinc-200 font-semibold">Rajat_Murhe_Resume.pdf</span>
+                  </div>
+                  <div class="flex justify-between text-zinc-400">
+                    <span>File Size</span>
+                    <span id="resume-size" class="font-mono text-zinc-200">8.5 KB</span>
+                  </div>
+                  <div class="flex justify-between text-zinc-400">
+                    <span>Last Updated</span>
+                    <span id="resume-mtime" class="text-zinc-200">--</span>
+                  </div>
+                  <div class="flex justify-between text-zinc-400">
+                    <span>MD5 Hash</span>
+                    <span id="resume-md5" class="font-mono text-[10px] text-zinc-400 truncate max-w-[160px]">--</span>
+                  </div>
+                </div>
+
+                <a href="/api/resume/download" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/80 transition">
+                  <i data-lucide="download" class="w-4 h-4"></i>
+                  <span>Download / Save Current PDF</span>
+                </a>
+              </div>
+
+              <!-- Upload Updated Resume -->
+              <div class="glass-card rounded-2xl p-6 space-y-4">
+                <div>
+                  <h3 class="text-sm font-bold text-white tracking-tight">Update Resume Version</h3>
+                  <p class="text-xs text-zinc-400">Upload your latest PDF. Automatically backs up previous versions.</p>
+                </div>
+
+                <div onclick="document.getElementById('resume-file-input').click()" class="border-2 border-dashed border-zinc-700/80 hover:border-brand-500 rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition bg-zinc-900/40 hover:bg-brand-500/5 group">
+                  <input type="file" id="resume-file-input" accept=".pdf" class="hidden" onchange="uploadResumeFile(this.files[0])">
+                  <i data-lucide="upload" class="w-6 h-6 text-zinc-400 group-hover:text-brand-400 transition mb-2"></i>
+                  <span class="text-xs font-semibold text-zinc-200">Select new Resume PDF</span>
+                  <span class="text-[11px] text-zinc-500 mt-1">Replaces Rajat_Murhe_Resume.pdf instantly</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- PDF Embed Preview (2 cols) -->
+            <div class="lg:col-span-2 glass-card rounded-2xl p-6 flex flex-col">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                  <i data-lucide="eye" class="w-4 h-4 text-brand-400"></i>
+                  <span>Live Resume Preview</span>
+                </h3>
+                <span class="text-xs text-zinc-400 font-mono">Rendered Preview</span>
+              </div>
+              <div class="flex-1 min-h-[550px] rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900">
+                <iframe id="resume-preview-frame" src="/api/resume/view" class="w-full h-full min-h-[550px]" frameborder="0"></iframe>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- =================================================================
+             4. TAB: FLEET SETTINGS
+             ================================================================= -->
+        <div id="tab-settings" class="tab-content hidden space-y-8 max-w-4xl">
+          
+          <div class="glass-card rounded-2xl p-6 space-y-6">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 class="text-base font-bold text-white tracking-tight">Email Inboxes & Rotation Fleet</h2>
+                <p class="text-xs text-zinc-400">Control enabled sender accounts, daily spam-safety limits, and delay intervals.</p>
+              </div>
+              <button onclick="addNewAccountRow()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-500/10 text-brand-300 border border-brand-500/30 hover:bg-brand-500/20 transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add Inbox Account</span>
+              </button>
+            </div>
+
+            <!-- Accounts List Container -->
+            <div id="settings-accounts-container" class="space-y-4">
+              <!-- Dynamically populated by JS -->
+            </div>
+
+            <div class="border-t border-zinc-800 pt-6 space-y-4">
+              <h3 class="text-sm font-bold text-white">Delivery Spacing & Protections</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Minimum Delay (Seconds)</label>
+                  <input type="number" id="setting-min-delay" min="20" max="180" value="45" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-200">
+                  <span class="text-[11px] text-zinc-500">Recommended: 45s human jitter</span>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Maximum Delay (Seconds)</label>
+                  <input type="number" id="setting-max-delay" min="30" max="300" value="75" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-200">
+                  <span class="text-[11px] text-zinc-500">Recommended: 75s human jitter</span>
+                </div>
+              </div>
+
+              <div class="pt-2 flex items-center gap-3">
+                <input type="checkbox" id="setting-desktop-notifs" checked class="rounded border-zinc-700 text-brand-600 focus:ring-brand-500 bg-zinc-900">
+                <label for="setting-desktop-notifs" class="text-xs text-zinc-300">Display macOS desktop notification banner when daily outreach concludes</label>
+              </div>
+            </div>
+
+            <div class="pt-4 flex justify-end">
+              <button onclick="saveFleetSettings()" class="px-6 py-2.5 rounded-lg text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/30 transition transform active:scale-95">
+                💾 Save Fleet Configuration
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =================================================================
+             5. TAB: ENGINE TELEMETRY & LOGS
+             ================================================================= -->
+        <div id="tab-logs" class="tab-content hidden space-y-6">
+          
+          <!-- Terminal Window -->
+          <div class="glass-card rounded-2xl overflow-hidden border border-zinc-800 flex flex-col h-[650px] shadow-2xl">
+            
+            <!-- Terminal Header -->
+            <div class="h-11 bg-zinc-900 border-b border-zinc-800 px-4 flex items-center justify-between shrink-0">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
+                <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+                <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+                <span class="text-xs font-mono font-medium text-zinc-400 ml-2">daemon_telemetry.log</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <div class="relative w-44">
+                  <input type="text" id="filter-logs-input" placeholder="Filter log entries..." oninput="filterLogs()" class="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1 text-[11px] text-zinc-300 placeholder-zinc-600 font-mono focus:outline-none focus:border-brand-500">
+                </div>
+                <button onclick="toggleAutoScroll()" id="btn-autoscroll" class="px-2.5 py-1 rounded text-[11px] font-mono border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 flex items-center gap-1">
+                  <i data-lucide="chevrons-down" class="w-3.5 h-3.5"></i> <span>Auto-Scroll: ON</span>
+                </button>
+                <button onclick="copyLogs()" class="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition text-xs font-mono" title="Copy All Logs">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="fetchLogs()" class="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition text-xs font-mono" title="Refresh Live Stream">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Terminal Logs Body -->
+            <div id="terminal-body" class="flex-1 bg-black/95 p-5 font-mono text-xs text-zinc-300 overflow-y-auto space-y-1.5 select-text">
+              <div class="text-zinc-500 italic">Initializing live telemetry stream...</div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- =====================================================================
+       EMAIL PREVIEW MODAL
+       ===================================================================== -->
+  <div id="email-preview-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/75 backdrop-blur-md transition-opacity">
+    <div class="glass-card bg-zinc-900/95 border border-zinc-700/80 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 duration-200" id="email-preview-card">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/40">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 flex items-center justify-center">
+            <i data-lucide="mail" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white tracking-tight">Application Email Preview</h3>
+            <p class="text-[11px] text-zinc-400">Exact email delivered to recruiter via background Brave CDP</p>
+          </div>
+        </div>
+        <button onclick="closeEmailPreview()" class="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <!-- Metadata -->
+        <div class="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-zinc-500 font-medium">To:</span>
+            <span id="preview-modal-to" class="text-zinc-200 font-mono font-semibold">recruiter@company.com</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-zinc-500 font-medium">Recipient / Org:</span>
+            <span id="preview-modal-recipient" class="text-zinc-300">Priya Sharma &bull; Hevo Data</span>
+          </div>
+          <div class="flex items-center justify-between pt-1 border-t border-zinc-800/60">
+            <span class="text-zinc-500 font-medium">Subject:</span>
+            <div class="flex items-center gap-2">
+              <span id="preview-modal-subject" class="text-brand-300 font-semibold truncate max-w-sm">Application: AI Engineering Intern - Rajat Murhe</span>
+              <button onclick="copyModalSubject()" class="text-zinc-500 hover:text-zinc-200" title="Copy Subject">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attachment Chip -->
+        <div class="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2.5 text-emerald-400">
+            <i data-lucide="paperclip" class="w-4 h-4"></i>
+            <div>
+              <span class="font-semibold font-mono text-zinc-200">Rajat_Murhe_Resume.pdf</span>
+              <span class="text-[11px] text-zinc-400 ml-1.5">(8.5 KB &bull; Verified MD5 Attachment)</span>
+            </div>
+          </div>
+          <a href="/api/resume/download" class="text-emerald-400 hover:text-emerald-300 font-medium hover:underline text-[11px] flex items-center gap-1">
+            <i data-lucide="download" class="w-3 h-3"></i> Download
+          </a>
+        </div>
+
+        <!-- Rendered Message -->
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Personalized Message Body</label>
+          <pre id="preview-modal-body" class="p-4 rounded-xl bg-black/60 border border-zinc-800 text-xs text-zinc-300 font-sans whitespace-pre-wrap leading-relaxed select-text font-normal"></pre>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3.5 border-t border-zinc-800 bg-zinc-950/40 flex items-center justify-between">
+        <span class="text-[11px] text-zinc-500 flex items-center gap-1.5">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span>Background tab execution &bull; 0 window focus stealing</span>
+        </span>
+        <button onclick="closeEmailPreview()" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition">
+          Close Preview
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- App Script -->
+  <script src="/app.js"></script>
+</body>
+</html>
