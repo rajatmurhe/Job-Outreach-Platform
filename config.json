@@ -2,21 +2,15 @@
   "accounts": [
     {
       "account": "murherajat27@gmail.com",
-      "user_index": 5,
+      "user_index": 1,
       "daily_limit": 25,
       "enabled": true
     },
     {
       "account": "murherajat1@gmail.com",
-      "user_index": 7,
+      "user_index": 2,
       "daily_limit": 25,
       "enabled": true
-    },
-    {
-      "account": "rajatmurhe1@gmail.com",
-      "user_index": 1,
-      "daily_limit": 25,
-      "enabled": false
     }
   ],
   "cdp_port": 9222,
