@@ -1,0 +1,36 @@
+{
+  "accounts": [
+    {
+      "account": "murherajat27@gmail.com",
+      "user_index": 5,
+      "daily_limit": 25,
+      "enabled": true
+    },
+    {
+      "account": "murherajat1@gmail.com",
+      "user_index": 7,
+      "daily_limit": 25,
+      "enabled": true
+    },
+    {
+      "account": "rajatmurhe1@gmail.com",
+      "user_index": 1,
+      "daily_limit": 25,
+      "enabled": false
+    }
+  ],
+  "cdp_port": 9222,
+  "leads_file": "todays_outreach_queue.csv",
+  "log_file": "emails_sent.csv",
+  "resume_filename": "Rajat_Murhe_Resume.pdf",
+  "delays": {
+    "min_seconds": 45,
+    "max_seconds": 75
+  },
+  "schedule": {
+    "hour": 9,
+    "minute": 30,
+    "weekdays_only": true
+  },
+  "desktop_notifications": true
+}
