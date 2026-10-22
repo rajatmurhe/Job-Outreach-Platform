@@ -94,6 +94,16 @@ def notify_mac(title, message):
         pass
 
 
+def is_ws_closed(ws):
+    if ws is None:
+        return True
+    if hasattr(ws, "state"):
+        return ws.state.name != "OPEN"
+    if hasattr(ws, "closed"):
+        return ws.closed
+    return getattr(ws, "close_code", None) is not None
+
+
 def load_config():
     if not os.path.isfile(CONFIG_PATH):
         raise FileNotFoundError(f"Configuration file not found: {CONFIG_PATH}")
@@ -639,7 +649,7 @@ async def run_daily_outreach():
                 continue
 
             # Ensure active websocket connection to single tab
-            if ws is None or ws.closed:
+            if is_ws_closed(ws):
                 try:
                     if ws is not None:
                         await ws.close()
@@ -686,7 +696,7 @@ async def run_daily_outreach():
                     log(f"Staying on tab. Sleeping for {sleep_time:.1f}s to protect deliverability...")
                     await asyncio.sleep(sleep_time)
 
-        if ws and not ws.closed:
+        if ws and not is_ws_closed(ws):
             try:
                 await ws.close()
             except Exception:
