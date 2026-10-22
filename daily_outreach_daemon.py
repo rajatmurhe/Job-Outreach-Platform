@@ -111,7 +111,21 @@ def ensure_brave_running(port=9222):
     except Exception:
         pass
 
-    log("❌ Brave is not responding on port 9222. Please ensure Brave is running with --remote-debugging-port=9222", level="ERROR")
+    log(f"Brave CDP port {port} not responding. Launching Brave with remote debugging...")
+    try:
+        subprocess.run(["open", "-a", "/Applications/Brave Browser.app", "--args", f"--remote-debugging-port={port}"])
+        for _ in range(12):
+            time.sleep(1)
+            try:
+                req = urllib.request.urlopen(f"http://localhost:{port}/json/version", timeout=2)
+                if req.status == 200:
+                    log("✅ Brave started and port 9222 is active!")
+                    return True
+            except Exception:
+                pass
+    except Exception as e:
+        log(f"Error launching Brave: {e}", level="ERROR")
+
     return False
 
 
@@ -614,46 +628,69 @@ async def run_daily_outreach():
         log(f"🚀 Starting dispatch for {cur_account} strictly on Tab {tab_id} | Target: {remaining_slots} emails.")
         account_sent_count = 0
 
-        # KEEP SAME TAB CONNECTION OPEN
-        async with websockets.connect(ws_url, max_size=10_000_000, ping_interval=10, ping_timeout=10) as ws:
-            for lead in leads:
-                if account_sent_count >= remaining_slots:
-                    break
+        # KEEP SAME TAB CONNECTION OPEN WITH AUTO-RECONNECT
+        ws = None
+        for lead in leads:
+            if account_sent_count >= remaining_slots:
+                break
 
-                email, name, company, subject, body, resume_path = format_lead_message(lead)
-                if email.lower() in sent_emails:
-                    continue
+            email, name, company, subject, body, resume_path = format_lead_message(lead)
+            if email.lower() in sent_emails:
+                continue
 
+            # Ensure active websocket connection to single tab
+            if ws is None or ws.closed:
                 try:
-                    success, reason = await send_single_email_in_tab(
-                        ws=ws,
-                        recipient_email=email,
-                        name=name,
-                        company=company,
-                        subject=subject,
-                        body=body,
-                        resume_path=resume_path,
-                        account_email=cur_account
-                    )
-                except Exception as e:
-                    log(f"❌ Error sending to {email} from {cur_account}: {e}", level="ERROR")
-                    success, reason = False, str(e)
+                    if ws is not None:
+                        await ws.close()
+                except Exception:
+                    pass
+                log(f"Connecting to tab {tab_id} for {cur_account}...")
+                ws = await websockets.connect(ws_url, max_size=10_000_000, ping_interval=10, ping_timeout=10)
 
-                ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                csv_writer.writerow([ts, email, name, company, "Success" if success else "Failed", subject, cur_account])
-                csv_file.flush()
+            try:
+                success, reason = await send_single_email_in_tab(
+                    ws=ws,
+                    recipient_email=email,
+                    name=name,
+                    company=company,
+                    subject=subject,
+                    body=body,
+                    resume_path=resume_path,
+                    account_email=cur_account
+                )
+            except Exception as e:
+                log(f"❌ Error sending to {email} from {cur_account}: {e}", level="ERROR")
+                success, reason = False, str(e)
+                if "close" in str(e).lower() or "connection" in str(e).lower():
+                    try:
+                        await ws.close()
+                    except Exception:
+                        pass
+                    ws = None
+                    await asyncio.sleep(2)
 
-                if success:
-                    sent_emails.add(email.lower())
-                    account_sent_count += 1
-                    total_session_sent += 1
-                    today_sent_by_account[cur_account] = today_sent_by_account.get(cur_account, 0) + 1
-                    log(f"[{cur_account}] Progress: {account_sent_count}/{remaining_slots} sent (Session total: {total_session_sent}).")
+            ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            csv_writer.writerow([ts, email, name, company, "Success" if success else "Failed", subject, cur_account])
+            csv_file.flush()
 
-                    if account_sent_count < remaining_slots:
-                        sleep_time = random.uniform(min_delay, max_delay)
-                        log(f"Staying on tab. Sleeping for {sleep_time:.1f}s to protect deliverability...")
-                        await asyncio.sleep(sleep_time)
+            if success:
+                sent_emails.add(email.lower())
+                account_sent_count += 1
+                total_session_sent += 1
+                today_sent_by_account[cur_account] = today_sent_by_account.get(cur_account, 0) + 1
+                log(f"[{cur_account}] Progress: {account_sent_count}/{remaining_slots} sent (Session total: {total_session_sent}).")
+
+                if account_sent_count < remaining_slots:
+                    sleep_time = random.uniform(min_delay, max_delay)
+                    log(f"Staying on tab. Sleeping for {sleep_time:.1f}s to protect deliverability...")
+                    await asyncio.sleep(sleep_time)
+
+        if ws and not ws.closed:
+            try:
+                await ws.close()
+            except Exception:
+                pass
 
         log(f"🏁 Finished batch for {cur_account}: {account_sent_count} sent.")
         if accounts.index(acc) < len(accounts) - 1:

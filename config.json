@@ -2,14 +2,14 @@
   "accounts": [
     {
       "account": "murherajat27@gmail.com",
-      "user_index": 1,
-      "daily_limit": 25,
+      "user_index": 4,
+      "daily_limit": 50,
       "enabled": true
     },
     {
       "account": "murherajat1@gmail.com",
-      "user_index": 2,
-      "daily_limit": 25,
+      "user_index": 1,
+      "daily_limit": 50,
       "enabled": true
     }
   ],
