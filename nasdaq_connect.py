@@ -70,6 +70,96 @@ TARGETS = [
         "name_match": "Sneha",
         "name": "Sneha Trivedi",
         "title": "Software Developer at Nasdaq"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=software%20engineer%20bengaluru",
+        "name_match": "Sourav",
+        "name": "Sourav Sinha",
+        "title": "Software Engineering @ Nasdaq"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=recruiter%20india",
+        "name_match": "Suhas",
+        "name": "Suhas Ramamurthy",
+        "title": "Director - Quality Assurance at Nasdaq"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=intern%20bengaluru",
+        "name_match": "Vignesh",
+        "name": "Vignesh Madan",
+        "title": "Analyst - Software Engineering @ Nasdaq"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=intern%20bengaluru",
+        "name_match": "Devangana",
+        "name": "Devangana Nair",
+        "title": "Data Engineering at Nasdaq | AI/ML Graduate"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=intern%20bengaluru",
+        "name_match": "Shruti",
+        "name": "Shruti Singhal",
+        "title": "Senior Analyst | Nasdaq | Market Operations"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=intern%20bengaluru",
+        "name_match": "Subhankit",
+        "name": "Subhankit Prusti",
+        "title": "Cloud Engineer @ Nasdaq | AWS Certified | ML/DL"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=intern%20bengaluru",
+        "name_match": "Aniket",
+        "name": "Aniket Arya",
+        "title": "Data Science Intern @ NASDAQ | Generative AI · NLP"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=chennai",
+        "name_match": "Goutham",
+        "name": "Goutham M",
+        "title": "Axiom Analyst @ Nasdaq Chennai"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=chennai",
+        "name_match": "Dhilip",
+        "name": "Dhilip Kumar Murali",
+        "title": "DevOps Application Support Engineer at Nasdaq"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=recruiter%20india",
+        "name_match": "BHOGI",
+        "name": "BHOGI ROHIT",
+        "title": "Data Analyst @ Nasdaq"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=software%20bengaluru",
+        "name_match": "Gowrish",
+        "name": "Gowrish Kotari",
+        "title": "Senior Software Developer @ Nasdaq"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=software%20bengaluru",
+        "name_match": "Mitesh",
+        "name": "Mitesh Sah",
+        "title": "Sr. Platform Engineer (DevSecOps) @ Nasdaq"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=software%20bengaluru",
+        "name_match": "Ankur",
+        "name": "Ankur Yaduvanshi",
+        "title": "Senior UI Engineer @ Nasdaq"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=university",
+        "name_match": "Farukh",
+        "name": "Farukh Shaikh",
+        "title": "Java & Calypso Developer @ Nasdaq"
+    },
+    {
+        "search_url": "https://www.linkedin.com/company/nasdaq/people/?keywords=university",
+        "name_match": "AKSHAY",
+        "name": "Akshay Shilawane",
+        "title": "Java & SpringBoot Developer @ Nasdaq"
     }
 ]
 
@@ -80,9 +170,12 @@ def log(msg, level="INFO"):
 
 
 def get_personalized_note(first_name):
-    # Requested exact note format with personalized first name
+    # If name is all caps or formatted, clean it
+    fn = first_name.title()
+    if fn.upper() == "BHOGI":
+        fn = "Rohit"
     note = (
-        f"Hi {first_name}, I’m a final year CSE student at VIT Chennai, interested in "
+        f"Hi {fn}, I’m a final year CSE student at VIT Chennai, interested in "
         f"Nasdaq Campus Program - 2027 - R0027122 . I’d love to connect and hear any "
         f"advice you may have regarding the opportunity"
     )
@@ -160,6 +253,10 @@ def send_invite_for_target(page, target):
             time.sleep(1)
 
         textarea = modal.locator("textarea#custom-message, textarea[name='message'], textarea").first
+        try:
+            textarea.wait_for(state="visible", timeout=3000)
+        except Exception:
+            pass
         if textarea.count() == 0 or not textarea.is_visible():
             log("Textarea for note not visible.")
             dismiss = modal.locator("button[aria-label='Dismiss'], button:has-text('Cancel')").first
